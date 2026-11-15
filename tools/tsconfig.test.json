@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": [
+      "ES2023"
+    ],
+    "types": [
+      "node"
+    ],
+    "outDir": "../dist/types/test",
+    "tsBuildInfoFile": "../dist/types/test/tsconfig.tsbuildinfo",
+    "rootDir": "../src"
+  },
+  "include": [
+    "../src/**/*.test.ts"
+  ],
+  "exclude": [],
+  "references": [
+    {
+      "path": "./tsconfig.shared.json"
+    },
+    {
+      "path": "./tsconfig.server.json"
+    }
+  ]
+}

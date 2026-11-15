@@ -1,0 +1,988 @@
+/* Adu Layangan — the arena, its overlays, and the feed card.
+   Everything fits the viewport: a Reddit post cannot scroll its game. */
+
+/* ───────────────────────────── Arena ───────────────────────────── */
+
+.arena {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #1c2550;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The corners of the sky fall into shadow, which draws the eye to the kites. */
+.arena::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 1.2s var(--ease);
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 46%,
+    transparent 58%,
+    rgb(12 10 34 / 0.38) 100%
+  );
+}
+
+/* A bright sky needs less of it. */
+.arena[data-mood='pagi']::after,
+.arena[data-mood='siang']::after {
+  opacity: 0.4;
+}
+
+.arena--play {
+  cursor: pointer;
+}
+
+.arena__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sound-toggle {
+  position: absolute;
+  top: calc(var(--s-3) + env(safe-area-inset-top));
+  right: calc(var(--s-3) + env(safe-area-inset-right));
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  border-radius: 999px;
+  background: rgb(20 26 51 / 0.6);
+  color: var(--ink-2);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background 0.15s var(--ease),
+    color 0.15s var(--ease),
+    transform 0.1s var(--ease);
+}
+
+.sound-toggle:hover {
+  background: rgb(20 26 51 / 0.85);
+  color: var(--ink);
+  transform: scale(1.06);
+}
+
+.sound-toggle:active {
+  transform: scale(0.94);
+}
+
+.sound-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus);
+}
+
+.hud {
+  position: absolute;
+  top: calc(var(--s-3) + env(safe-area-inset-top));
+  left: 50%;
+  width: min(100% - 2 * var(--s-4), 24rem);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  pointer-events: none;
+}
+
+/* The bars appear once the round starts. */
+.game[data-phase='ready'] .hud {
+  display: none;
+}
+
+/* A dark plate behind the bars keeps them readable against a bright noon sky. */
+.hud__bars {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: rgb(20 26 51 / 0.42);
+}
+
+/* Each bar says what it measures and how much is left. */
+.hud__row {
+  display: grid;
+  grid-template-columns: 3.4rem 1fr 2.4rem;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.hud__label,
+.hud__value {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 1px 2px rgb(10 12 30 / 0.85);
+}
+
+.hud__label {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.hud__value {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.hud__bar {
+  display: block;
+  height: 8px;
+  border-radius: 99px;
+  background: rgb(20 26 51 / 0.55);
+  overflow: hidden;
+}
+
+.hud__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: left center;
+  background: var(--brass);
+}
+
+.hud__bar--string > span {
+  background: var(--putih);
+}
+
+.hud__bar--string > span[data-low='true'] {
+  background: var(--danger);
+}
+
+.hud__score {
+  min-width: 3.5ch;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: rgb(20 26 51 / 0.65);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-2);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ───────────────────────────── Game screen ───────────────────────────── */
+
+.game {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: space-between;
+  justify-items: center;
+  gap: var(--s-4);
+  padding: calc(var(--s-5) + env(safe-area-inset-top)) var(--s-4)
+    calc(var(--s-5) + env(safe-area-inset-bottom));
+  pointer-events: none;
+}
+
+.overlay--ready {
+  background: linear-gradient(
+    to bottom,
+    rgb(20 26 51 / 0.75),
+    rgb(20 26 51 / 0) 45%,
+    rgb(20 26 51 / 0) 60%,
+    rgb(20 26 51 / 0.82)
+  );
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-3);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-shadow: 0 2px 12px rgb(20 12 40 / 0.5);
+}
+
+.kite-mark {
+  flex: none;
+}
+
+.ready__head {
+  display: grid;
+  justify-items: center;
+  gap: var(--s-2);
+  text-align: center;
+}
+
+.ready__day {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.rivals {
+  list-style: none;
+  margin: var(--s-2) 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  width: min(100%, 20rem);
+}
+
+.rival {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  background: rgb(20 26 51 / 0.6);
+  font-size: var(--step--1);
+  text-align: left;
+}
+
+.rival strong {
+  font-weight: 700;
+}
+
+.rival span {
+  color: var(--ink-2);
+}
+
+/* The time of day the sky is drawn in: the player's choice, like a theme. */
+/* Only the buttons take presses; the space around them is still the sky. */
+.sky-pick {
+  pointer-events: none;
+  display: flex;
+  gap: 2px;
+  margin-top: var(--s-2);
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(20 26 51 / 0.72);
+}
+
+.sky-pick__btn {
+  pointer-events: auto;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-text);
+  font-weight: 600;
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.sky-pick__btn:hover {
+  color: var(--ink);
+}
+
+.sky-pick__btn[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.kite-thumb {
+  display: block;
+  flex: none;
+}
+
+/* The player's own row, above the rivals: their kite, their name, and the way into the workshop. */
+.me {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  width: min(100%, 20rem);
+  margin-top: var(--s-2);
+  padding: 4px 4px 4px 12px;
+  border: 1px solid var(--brass-dim);
+  border-radius: var(--radius);
+  background: rgb(20 26 51 / 0.72);
+  font-size: var(--step--1);
+  text-align: left;
+}
+
+.me__who {
+  display: grid;
+  line-height: 1.2;
+}
+
+.me__who span {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.me__who strong {
+  font-size: var(--step-0);
+  font-weight: 700;
+  color: var(--brass-strong);
+}
+
+.me__edit {
+  pointer-events: auto;
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  font-size: var(--step-0);
+}
+
+.wind {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.how {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: center;
+  width: min(100%, 22rem);
+  padding: var(--s-4);
+  border-radius: var(--radius-lg);
+  background: rgb(20 26 51 / 0.82);
+  text-align: center;
+}
+
+.how__keys {
+  display: flex;
+  gap: var(--s-4);
+  justify-content: center;
+  font-weight: 700;
+}
+
+.how__keys b {
+  color: var(--brass);
+}
+
+.how p {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  text-wrap: balance;
+}
+
+.how__go {
+  margin-top: var(--s-1);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-2);
+  color: var(--brass);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .how__go {
+    animation: breathe 1.6s var(--ease) infinite;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* The reminder at the bottom during the first seconds of a round. */
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgb(20 26 51 / 0.7);
+  font-size: var(--step--1);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: hint-out 0.6s var(--ease) 7s forwards;
+}
+
+@keyframes hint-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* ───────────────────────────── Workshop ───────────────────────────── */
+
+.overlay--workshop {
+  align-content: center;
+  padding: var(--s-3) var(--s-3) calc(var(--s-3) + env(safe-area-inset-bottom));
+  background: rgb(12 14 34 / 0.55);
+}
+
+.workshop {
+  pointer-events: auto;
+  display: grid;
+  gap: 10px;
+  width: min(100%, 25rem);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--s-3) var(--s-4) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgb(20 26 51 / 0.96);
+}
+
+.workshop__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.workshop__title {
+  font-size: var(--step-2);
+}
+
+.workshop__done {
+  min-height: 40px;
+  padding: 0 var(--s-5);
+  font-size: var(--step-0);
+}
+
+/* The kite hangs in a patch of evening sky. */
+.workshop__preview {
+  display: grid;
+  justify-items: center;
+  padding: var(--s-2) 0 var(--s-2);
+  border-radius: var(--radius);
+  background: linear-gradient(to bottom, #2b2a66, #b4527a 70%, #e9765a);
+}
+
+.kite-preview {
+  display: block;
+  width: 100%;
+  height: 96px;
+}
+
+.workshop__name {
+  padding: 2px 12px;
+  border-radius: 6px;
+  background: var(--brass);
+  color: var(--on-brass);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.field__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.namer {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr auto;
+  gap: 6px;
+}
+
+.stepper {
+  display: grid;
+  grid-template-columns: 34px 1fr 34px;
+  align-items: center;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--stage-2);
+}
+
+.stepper__arrow,
+.icon-btn {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.stepper__arrow:hover,
+.icon-btn:hover {
+  background: var(--stage-3);
+  color: var(--ink);
+}
+
+.stepper__value {
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.icon-btn {
+  width: 44px;
+  border: 1px solid var(--line);
+  background: var(--stage-2);
+}
+
+.choices {
+  display: grid;
+  gap: 6px;
+}
+
+.choices--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.choices--4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.choice {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 6px 2px 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--stage-2);
+  color: var(--ink-2);
+  font-family: var(--font-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.choice:hover {
+  background: var(--stage-3);
+}
+
+.choice[aria-pressed='true'] {
+  border-color: var(--brass);
+  background: var(--stage-3);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--brass);
+}
+
+.seg {
+  display: flex;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--stage-2);
+}
+
+.seg__btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-text);
+  font-weight: 600;
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.seg__btn[aria-pressed='true'] {
+  background: var(--brass);
+  color: var(--on-brass);
+}
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.swatch-btn {
+  justify-self: center;
+  width: 40px;
+  height: 40px;
+  border: 2px solid rgb(255 255 255 / 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.swatch-btn[aria-pressed='true'] {
+  border-color: var(--stage);
+  box-shadow: 0 0 0 3px var(--brass);
+}
+
+.workshop__note {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  text-align: center;
+}
+
+/* ───────────────────────────── Coins and the shop ───────────────────────────── */
+
+.coin {
+  display: inline-block;
+  flex: none;
+  vertical-align: -2px;
+}
+
+/* A balance: the coin and how many. */
+.coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 999px;
+  background: rgb(242 194 48 / 0.16);
+  color: var(--brass-strong);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Under the player's row on the ready screen: coins and the day's coin flights. */
+.purse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.workshop__head .coins {
+  margin-left: auto;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--stage-2);
+}
+
+.tabs__tab {
+  min-height: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-text);
+  font-weight: 600;
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.tabs__tab[aria-selected='true'] {
+  background: var(--stage-4);
+  color: var(--ink);
+}
+
+.workshop__panel {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-height: 236px;
+}
+
+.choice {
+  position: relative;
+}
+
+/* The price on something not owned yet. */
+.choice__price {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px 5px 1px 3px;
+  border-radius: 999px;
+  background: rgb(10 12 30 / 0.85);
+  color: var(--brass-strong);
+  font-size: 0.625rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Trying on something not owned: what it is, and the way to buy it. */
+.buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--brass-dim);
+  border-radius: var(--radius);
+  background: rgb(242 194 48 / 0.08);
+}
+
+.buy__what {
+  display: grid;
+  line-height: 1.25;
+  font-size: var(--step--1);
+}
+
+.buy__what span {
+  color: var(--ink-2);
+}
+
+.buy__btn {
+  flex: none;
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  font-size: var(--step-0);
+}
+
+/* The coins a round earned, on the result card. */
+.earned {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.earned__total {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--brass-strong);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+
+.earned__lines,
+.earned__note {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+/* ───────────────────────────── Down: watch or leave ───────────────────────────── */
+
+/* The player's kite is down but the sky is still live, so this stays small and low. */
+.overlay--down {
+  align-content: end;
+}
+
+.down {
+  pointer-events: auto;
+  display: grid;
+  gap: var(--s-3);
+  justify-items: center;
+  width: min(100%, 22rem);
+  padding: var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgb(20 26 51 / 0.92);
+  text-align: center;
+}
+
+.down__title {
+  font-size: var(--step-2);
+}
+
+.down__sub {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.down__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+/* Two choices side by side, so the sheet stays low and the sky stays in view. */
+.down__actions .btn {
+  min-height: 44px;
+  padding: 0 var(--s-4);
+  font-size: var(--step-0);
+  white-space: nowrap;
+}
+
+.watching {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: 6px 6px 6px var(--s-4);
+  border-radius: 999px;
+  background: rgb(20 26 51 / 0.88);
+  font-size: var(--step--1);
+  font-weight: 600;
+}
+
+.watching .btn {
+  min-height: 40px;
+  padding: 0 var(--s-4);
+  font-size: var(--step-0);
+}
+
+/* ───────────────────────────── Result ───────────────────────────── */
+
+.overlay--over {
+  align-content: center;
+  background: rgb(20 26 51 / 0.45);
+}
+
+.result {
+  pointer-events: auto;
+  display: grid;
+  gap: var(--s-3);
+  justify-items: center;
+  width: min(100%, 22rem);
+  padding: var(--s-5) var(--s-4) var(--s-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: rgb(20 26 51 / 0.94);
+  text-align: center;
+}
+
+.result__title {
+  font-size: var(--step-3);
+}
+
+.result__sub {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.result__score {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 3rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  font-size: var(--step--1);
+}
+
+.lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: 4px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lines li span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.trophies {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--s-2);
+}
+
+.trophy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: var(--stage-3);
+  font-size: var(--step--1);
+}
+
+.result__best {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .result {
+    animation: rise 320ms var(--ease) both;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+/* ───────────────────────────── Feed card ───────────────────────────── */
+
+.splash {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.splash__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: space-between;
+  justify-items: center;
+  padding: var(--s-4);
+  background: linear-gradient(
+    to bottom,
+    rgb(20 26 51 / 0.7),
+    rgb(20 26 51 / 0) 40%,
+    rgb(20 26 51 / 0) 65%,
+    rgb(20 26 51 / 0.75)
+  );
+  text-align: center;
+}
+
+.splash__pitch {
+  margin-top: var(--s-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  text-wrap: balance;
+  text-shadow: 0 2px 10px rgb(20 12 40 / 0.6);
+}
+
+.splash__foot {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: center;
+}
+
+.splash__meta {
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}

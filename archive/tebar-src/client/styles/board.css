@@ -1,0 +1,218 @@
+/* Tebar — the board. */
+
+.board {
+  position: relative;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.board__frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--board-ratio);
+  margin-inline: auto;
+  filter: drop-shadow(0 22px 26px rgb(0 0 0 / 0.55))
+    drop-shadow(0 6px 10px rgb(0 0 0 / 0.45));
+}
+
+/* The board fills the room its container leaves, by width or by height, whichever is tighter.
+   The container (.stage__board, .splash__board) is a size container, so 100cqh is its height. */
+
+/* Lying down. */
+.board--wide .board__frame {
+  width: min(100%, 58rem, calc(100cqh * var(--board-ratio)));
+}
+
+/* Upright on narrow screens. */
+.board--tall .board__frame {
+  width: min(100%, 22rem, calc(100cqh * var(--board-ratio)));
+}
+
+.board__svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.board__holes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hole-btn {
+  position: absolute;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    box-shadow 160ms var(--ease),
+    background-color 160ms var(--ease);
+}
+
+.hole-btn:disabled {
+  cursor: default;
+  pointer-events: none;
+}
+
+.hole-btn:not(:disabled):hover {
+  background: radial-gradient(
+    circle,
+    rgb(226 194 122 / 0.12) 52%,
+    transparent 54%
+  );
+}
+
+.hole-btn:not(:disabled):active {
+  background: radial-gradient(
+    circle,
+    rgb(226 194 122 / 0.22) 52%,
+    transparent 54%
+  );
+}
+
+.hole-btn:focus-visible {
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 3px var(--brass-strong),
+    0 0 0 3px var(--stage);
+}
+
+/* Counts written on the wood. */
+.count {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 23px;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: rgb(46 25 10 / 0.6);
+  stroke-width: 3px;
+}
+
+.count--zero {
+  fill: rgb(243 235 221 / 0.55);
+}
+
+.count-plate {
+  fill: rgb(20 11 5 / 0.78);
+  stroke: var(--brass-dim);
+  stroke-width: 1.5;
+}
+
+.count--store {
+  fill: var(--brass-strong);
+  font-size: 24px;
+  stroke: none;
+}
+
+/* The score to beat, carved into the far store. */
+.goal__caption {
+  font-family: var(--font-text);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  fill: rgb(226 194 122 / 0.75);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.goal__number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 34px;
+  fill: rgb(226 194 122 / 0.9);
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Marks. */
+.mark {
+  fill: none;
+  pointer-events: none;
+}
+
+.mark--playable {
+  stroke: var(--brass);
+  stroke-width: 2.5;
+  stroke-opacity: 0.75;
+}
+
+.mark--selected {
+  stroke: #f6dc98;
+  stroke-width: 5;
+  fill: rgb(246 220 152 / 0.14);
+}
+
+.mark--landing {
+  stroke: #f6dc98;
+  stroke-width: 3.5;
+  stroke-dasharray: 7 7;
+  stroke-linecap: round;
+}
+
+.landing__dot {
+  fill: #f6dc98;
+  pointer-events: none;
+}
+
+.mark--active {
+  stroke: #f6dc98;
+  stroke-width: 4.5;
+}
+
+.mark--path {
+  stroke: var(--brass);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 6;
+  stroke-opacity: 0.85;
+}
+
+.mark--capture {
+  stroke: var(--danger);
+  stroke-width: 4;
+}
+
+.hand circle {
+  fill: var(--brass);
+  stroke: var(--on-brass);
+  stroke-width: 2;
+}
+
+.hand text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 19px;
+  fill: var(--on-brass);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.board__flyer {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .landing {
+    animation: landing-pulse 1.4s var(--ease) infinite;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+}
+
+@keyframes landing-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

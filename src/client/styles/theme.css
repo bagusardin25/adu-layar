@@ -1,0 +1,61 @@
+/* Adu Layangan — design tokens.
+   A kampung sky at golden hour. Panels are deep dusk blue so text stays readable over the sky;
+   warm orange is the one accent. */
+
+:root {
+  color-scheme: dark;
+
+  /* Dusk panels */
+  --stage: #141a33;
+  --stage-2: #1b2244;
+  --stage-3: #252d55;
+  --stage-4: #2f3865;
+  --line: #36406d;
+  --line-strong: #6c76a6; /* control borders, 3.3:1 on stage-2 */
+
+  /* Ink */
+  --ink: #fff6e8; /* 16:1 on stage */
+  --ink-2: #d6cfe6; /* 11:1 on stage */
+  --ink-3: #a9a3c4; /* 6.8:1 on stage */
+
+  /* The accent: sunset orange */
+  --brass: #ffb347; /* 10:1 on stage */
+  --brass-strong: #ffc670;
+  --brass-dim: #b07a2a;
+  --on-brass: #2a1606; /* 10:1 on brass */
+
+  /* Kites */
+  --merah: #d7263d;
+  --putih: #ffffff;
+
+  --danger: #ff8a7a;
+  --ok: #9fdc9a;
+
+  /* Type */
+  --font-display:
+    'Bricolage Grotesque Variable', 'Schibsted Grotesk Variable', system-ui,
+    sans-serif;
+  --font-text:
+    'Schibsted Grotesk Variable', system-ui, -apple-system, 'Segoe UI',
+    sans-serif;
+  --step--1: 0.875rem;
+  --step-0: 1rem;
+  --step-1: 1.125rem;
+  --step-2: 1.375rem;
+  --step-3: clamp(1.6rem, 1.2rem + 1.4vw, 2.1rem);
+  --step-4: clamp(2.1rem, 1.4rem + 3vw, 3.4rem);
+
+  /* Space */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.5rem;
+  --s-6: 2rem;
+
+  /* Shape */
+  --radius: 10px;
+  --radius-lg: 16px;
+  --focus: 0 0 0 3px var(--stage), 0 0 0 5px var(--brass-strong);
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
