@@ -59,6 +59,11 @@ export type Scene = {
   tick: number;
   /** Show the player's heading marker. */
   showHeading: boolean;
+  /**
+   * Show the names under the kites. Off on the ready screen, where they would show through the
+   * panels; on once the round starts, on the feed card, and in the first flight's lesson.
+   */
+  showTags: boolean;
   /** The time of day to draw the sky in. */
   mood: Mood;
   /** How the player's kite looks, and the name it flies under. */
@@ -434,9 +439,11 @@ export function drawScene(ctx: Ctx, v: View, scene: Scene, stage: Stage): void {
   ctx.textAlign = 'center';
   const rank = (k: Kite) =>
     k.id === PLAYER_ID ? 0 : k.kind === 'king' ? 1 : 2;
-  const placeOrder = match.kites
-    .filter((k) => k.state === 'flying')
-    .sort((a, b) => rank(a) - rank(b));
+  const placeOrder = scene.showTags
+    ? match.kites
+        .filter((k) => k.state === 'flying')
+        .sort((a, b) => rank(a) - rank(b))
+    : [];
   const taken: { l: number; r: number; t: number; b: number }[] = [];
   const free = (l: number, r: number, t: number, b: number) =>
     !taken.some(
