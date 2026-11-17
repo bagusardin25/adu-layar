@@ -1,56 +1,74 @@
-# Teks untuk r/TebarGame dan halaman app
+# r/AduLayangan
 
-Teks lama di subreddit masih tentang Tebar (puzzle congklak). Ganti dengan teks di bawah. Teks yang tampil di Reddit ditulis dalam bahasa Inggris, karena juri dan pemainnya memakai bahasa Inggris.
+The app players and judges should see is **Adu Layangan**, on **r/AduLayangan**. The playable name in `devvit.json` is `adu-layangan`, and the dev subreddit is `AduLayangan`.
 
-Nama subreddit (`TebarGame`) dan ID app (`tebar-game`) tidak bisa diganti di Reddit. Hanya judul, deskripsi, dan sidebar yang bisa.
+An app that was already uploaded as `tebar-game` cannot be renamed, and neither can `r/TebarGame`. Leave that install as it is. The next upload, when you choose to publish, creates the new app. This repository does not upload by itself.
 
-## Di subreddit (Mod Tools → Community settings / General settings)
+## Create the subreddit
 
-### Title
+`u/bagusardin_` is logged in. **r/AduLayangan does not exist yet**, and Devvit 0.15 has no command that creates a subreddit by itself.
+
+`adu-layangan` is a new app name, so Reddit does not know it yet. Playtest stopped with: the app does not exist until `npx devvit init`. That command opens a browser, gives you a code, and registers the new app. It was not run. `devvit upload` and `devvit publish` were not run either.
+
+After the app exists:
+
+```bash
+npx devvit playtest AduLayangan
+```
+
+An install named `tebar-game` on `r/TebarGame` cannot be renamed. Leave it.
+
+## Settings to turn on
+
+- **User flair:** Mod Tools → User flair → turn on user flair, so a player's kampung shows next to their name. The app sets a player's flair only when that player taps **Wear as my flair**.
+- **Modmail** stays open: **Report a problem** in the game opens a message to the subreddit's moderators.
+
+## Title
+
 ```text
 Adu Layangan: a daily kite fight
 ```
 
-### Description
-Maksimal 500 karakter; teks ini 298.
+## Description
+
 ```text
-Adu Layangan is a daily kite fight over an Indonesian kampung. Every day brings a new sky, the same for everyone: new wind and three rival flyers. Hold to pull your fighter kite, let go to turn, and cross their strings to cut them. Your first three flights each day earn coins for your kite's look.
+Adu Layangan is a daily kite fight over an Indonesian kampung. Every day brings a new sky, the same for everyone: new wind, three rival flyers, and Raja Langit, yesterday's best flight. Hold to dart, release to steer, and cross their strings to cut them. Your best of three scored flights is kept.
 ```
 
-### Sidebar
+## Sidebar
+
 ```text
 **A daily kite fight over an Indonesian kampung.**
 
-Every day at 00:00 UTC there is a new sky, the same for everyone: a new wind and three rival kite flyers from the kampung.
+Every day at 00:00 UTC there is a new sky, the same for everyone: a new wind, three rival kite flyers, and Raja Langit, yesterday's best flight played back.
 
 **How to fly**
 
-* **Hold** anywhere to pull: your kite darts where its nose points.
-* **Let go** and it spins slowly, drifting with the wind.
-* Where strings cross, the faster one saws through the slower. Cross theirs while you pull, and pull back when they rub yours.
+* **Hold** to dart: your kite goes where its nose points. The arrow shows that direction.
+* **Release** to steer: the kite spins until the nose is where you want it.
+* Where strings cross, the faster one saws through the slower.
 
-**Coins.** Your first three flights each day earn coins. Spend them on patterns, tails and strings for your kite. Coins buy looks only, never speed or strength.
+**Scored flights.** Your first three flights each day can earn coins. Your best of those three is the score that is kept. Later flights are practice.
 
-**Share your best flight** in the comments of the day's post.
-
-**Found a problem?** Message the mods.
+**Share** your flight from the result card. It posts under the day's thread.
 
 *Adu layangan* is Indonesian for "kite fighting", played from the rooftops every dry season.
 ```
 
-### Submission text
+## Submission text
+
 ```text
-Share your best flight, the rival who cut you, or an idea for the kampung.
+Share your flight card, the rival who cut you, or a kite you are proud of.
 ```
 
-## Di halaman app (developers.reddit.com/apps/tebar-game)
+## App page
 
-Deskripsi panjang di halaman app diambil dari `README.md` setiap kali app diunggah, jadi sudah ikut diperbarui di versi 0.0.3. Kalau di halaman itu masih ada deskripsi singkat satu baris dari saat app dibuat, ganti dengan:
+The long description is `README.md`. The one-line description:
 
 ```text
 A daily kite fight: fly your kite with one finger and cut your rivals' strings over an Indonesian kampung.
 ```
 
-## Post lama
+## Old posts
 
-Post yang dibuat waktu masih Tebar tetap berjudul Tebar, karena Reddit tidak mengizinkan judul post diubah. Isinya sudah menampilkan Adu Layangan. Kalau mau rapi, hapus post lama itu lewat Mod Tools (Remove). Post baru berjudul "Adu Layangan · Day N · tanggal" dibuat otomatis setiap hari pukul 00.00 UTC (07.00 WIB). Kalau post hari ini sudah ada, menu **Post today's sky** hanya membuka post itu.
+Posts made while the app was still Tebar keep their old titles. New posts are titled `Adu Layangan · Day N · Cut down {Raja Langit}`.
