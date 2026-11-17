@@ -45,6 +45,26 @@ const app = createApp({
     if (sticky) await comment.distinguish(true);
     return { id: comment.id };
   },
+  commentScores: async (ids) => {
+    const out: Record<string, number | null> = {};
+    await Promise.all(
+      ids.map(async (id) => {
+        try {
+          const c = await reddit.getCommentById(id as `t1_${string}`);
+          const gone =
+            c.removed ||
+            c.spam ||
+            c.body === '[deleted]' ||
+            c.authorName === '[deleted]';
+          out[id] = gone ? null : c.score;
+        } catch (error) {
+          // Left out: not known right now, which is not the same as gone.
+          console.warn('Could not read the score of', id, error);
+        }
+      })
+    );
+    return out;
+  },
   setFlair: async ({ username, text, backgroundColor }) => {
     await reddit.setUserFlair({
       subredditName: context.subredditName,
