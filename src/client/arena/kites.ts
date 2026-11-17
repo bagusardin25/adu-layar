@@ -373,14 +373,20 @@ export function drawKite(
   // Streaks behind a kite that is being pulled hard.
   const speed = Math.hypot(k.vx, k.vy);
   if (k.state === 'flying' && k.pull && speed > 70) {
-    ctx.strokeStyle = `rgba(${look.ink}, 0.22)`;
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = `rgba(${look.ink}, 0.42)`;
+    ctx.lineWidth = 1.3;
+    ctx.lineCap = 'round';
     ctx.beginPath();
-    for (const x of [-9, 9]) {
-      ctx.moveTo(x, 12);
-      ctx.lineTo(x, 12 + speed / 8);
+    for (const [x, reach] of [
+      [-10, 1],
+      [0, 0.6],
+      [10, 1],
+    ]) {
+      ctx.moveTo(x, 14);
+      ctx.lineTo(x, 14 + (speed / 6) * reach);
     }
     ctx.stroke();
+    ctx.lineCap = 'butt';
   }
 
   if (look.marker) {
@@ -429,20 +435,20 @@ export function throwBits(
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * TAU;
     const paper = i % 5 !== 0;
-    const speed = (paper ? 30 : 70) + Math.random() * (paper ? 60 : 90);
+    const speed = (paper ? 40 : 90) + Math.random() * (paper ? 110 : 120);
     bits.push({
       x,
       y,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed - 30,
       born: now,
-      life: paper ? 900 + Math.random() * 700 : 260 + Math.random() * 200,
+      life: paper ? 1100 + Math.random() * 900 : 300 + Math.random() * 240,
       colour: paper ? colours[i % colours.length] : '#FFF2B8',
-      size: paper ? 1.6 + Math.random() * 1.6 : 1,
+      size: paper ? 2.4 + Math.random() * 2.8 : 1,
       paper,
     });
   }
-  if (bits.length > 160) bits.splice(0, bits.length - 160);
+  if (bits.length > 220) bits.splice(0, bits.length - 220);
 }
 
 export function drawBits(
@@ -471,10 +477,17 @@ export function drawBits(
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.rotate(age / 90 + i);
-      ctx.fillRect(-b.size, -b.size * 0.6, b.size * 2, b.size * 1.2);
+      // A scrap turns over as it falls, so it shows its edge now and then.
+      const turn = 0.25 + 0.75 * Math.abs(Math.sin(age / 130 + i * 1.7));
+      ctx.fillRect(
+        -b.size,
+        -b.size * 0.6 * turn,
+        b.size * 2,
+        b.size * 1.2 * turn
+      );
       ctx.restore();
     } else {
-      ctx.fillRect(b.x - 0.6, b.y - 0.6, 1.2, 1.2);
+      ctx.fillRect(b.x - 0.9, b.y - 0.9, 1.8, 1.8);
     }
   }
   ctx.globalAlpha = 1;

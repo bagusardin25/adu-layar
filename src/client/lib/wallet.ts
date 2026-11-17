@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import type { CoinLine } from '../../shared/coins.ts';
+import type { KampungBoard, KampungId } from '../../shared/kampung.ts';
 import type { Taps } from '../../shared/sim/match.ts';
 
 export type WalletView = {
@@ -15,12 +16,35 @@ export type WalletView = {
   spoolsLeft: number;
 };
 
+export type Standing = { rank: number; name: string; score: number };
+
 /** What the server said about a finished round. */
 export type RoundAnswer = {
   score: number;
   counted: boolean;
   coins: { lines: CoinLine[]; earned: number };
   wallet: WalletView | null;
+  best: number;
+  rank: number | null;
+  streak: number;
+  kingCut: boolean;
+  names: string[];
+  standings: Standing[];
+  /** The kampung this round's points went to, if it was scored and the player has one. */
+  kampung: KampungId | null;
+  kampungs: KampungBoard;
+};
+
+/** The score card, and whether it is (or can be) posted as the player's comment. */
+export type ShareAnswer = {
+  text: string;
+  /** This flight's card is in the comments. */
+  posted: boolean;
+  /** False outside a Reddit post, where there is nowhere to post it. */
+  canPost: boolean;
+  /** The Reddit username the comment is posted under. */
+  as: string;
+  error?: string;
 };
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -38,6 +62,7 @@ export function useWallet(): {
   wallet: WalletView | null;
   buy: (item: string) => Promise<string | null>;
   submitRound: (day: number, taps: Taps) => Promise<RoundAnswer>;
+  share: (confirm: boolean) => Promise<ShareAnswer>;
 } {
   const [wallet, setWallet] = useState<WalletView | null>(null);
 
@@ -78,5 +103,9 @@ export function useWallet(): {
     []
   );
 
-  return { wallet, buy, submitRound };
+  const share = useCallback(async (confirm: boolean): Promise<ShareAnswer> => {
+    return post<ShareAnswer>('/api/share', { confirm });
+  }, []);
+
+  return { wallet, buy, submitRound, share };
 }
