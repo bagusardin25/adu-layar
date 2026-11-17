@@ -319,7 +319,7 @@ function Ready({
         <div className="me">
           <KiteThumb look={lookOf(profile.design)} size={34} mine />
           <p className="me__who">
-            <span>{mine ? `You · ${mine.label}` : 'You'}</span>
+            <span>{mine ? `You · ${mine.short}` : 'You'}</span>
             <strong>{nameOf(profile.name)}</strong>
           </p>
           <button type="button" className="btn me__edit" onClick={onCustomize}>
@@ -614,19 +614,23 @@ function KampungLine({
       </p>
     );
   const place = kampungOf(answer.kampung);
-  const news = kampungNews(answer.kampungs);
+  const [top, next] = answer.kampungs.today;
+  const leading =
+    top?.id === answer.kampung &&
+    top.points > 0 &&
+    (next?.points ?? 0) < top.points;
+  const news = leading ? 'in the lead today' : kampungNews(answer.kampungs);
+  const gain =
+    answer.score > 0
+      ? `+${answer.score} for ${place.label}`
+      : `No points for ${place.label} this time`;
   return (
     <p
       className="result__kampung"
       style={{ '--kampung': place.colour } as CSSProperties}
     >
       <span className="kampung-dot" aria-hidden="true" />
-      <span>
-        {answer.score > 0
-          ? `+${answer.score} for ${place.label}`
-          : `No points for ${place.label} this time`}
-        {news ? ` · ${news}` : ''}
-      </span>
+      {news ? `${gain} · ${news}` : gain}
     </p>
   );
 }
@@ -814,10 +818,7 @@ function Result({
             if (!k || e.type !== 'cut') return null;
             return (
               <li key={`${k.id}-${e.tick}`}>
-                <span>
-                  {k.name}
-                  {k.kind === 'king' ? ' · Raja' : ''}
-                </span>
+                <span>{k.name}</span>
                 <span>+{e.points}</span>
               </li>
             );

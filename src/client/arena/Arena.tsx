@@ -34,6 +34,11 @@ import type { Mood } from './mood.ts';
 const STEP_MS = 1000 / TICKS_PER_SECOND;
 /** Never run more than this many simulation steps in one frame, so a slow frame cannot snowball. */
 const MAX_STEPS_PER_FRAME = 6;
+/**
+ * The feed card plays itself at 30 frames a second rather than 60, and not at all while it is
+ * scrolled out of view or the app is in the background, to spare phones in the feed.
+ */
+const ATTRACT_FRAME_MS = 1000 / 30;
 /** The picture holds still for a moment when a string is cut, so the cut is felt. */
 const HIT_PAUSE_MS = 90;
 /** When the player's own string is cut, the sky runs slowly for a moment as the kite drifts off. */
@@ -394,7 +399,20 @@ export function Arena({
     };
 
     let raf = 0;
+    let onScreen = true;
+    let lastDrawn = -Infinity;
+    const asleep = () =>
+      mode === 'attract' &&
+      (!onScreen || document.visibilityState === 'hidden');
     const frame = (t: number) => {
+      raf = 0;
+      // Asleep, nothing is scheduled; `wake` starts the frames again.
+      if (asleep()) return;
+      if (mode === 'attract' && t - lastDrawn < ATTRACT_FRAME_MS - 2) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      lastDrawn = t;
       const dt = Math.min(100, t - last);
       last = t;
 
@@ -500,11 +518,27 @@ export function Arena({
       hud();
       raf = requestAnimationFrame(frame);
     };
+    const wake = () => {
+      if (raf || asleep()) return;
+      last = performance.now();
+      raf = requestAnimationFrame(frame);
+    };
+    const sight =
+      mode === 'attract' && typeof IntersectionObserver !== 'undefined'
+        ? new IntersectionObserver((entries) => {
+            onScreen = entries.some((e) => e.isIntersecting);
+            wake();
+          })
+        : null;
+    sight?.observe(box);
+    document.addEventListener('visibilitychange', wake);
     raf = requestAnimationFrame(frame);
 
     return () => {
       cancelAnimationFrame(raf);
       observer.disconnect();
+      sight?.disconnect();
+      document.removeEventListener('visibilitychange', wake);
       sound.stopAll();
       box.removeEventListener('pointerdown', onDown);
       box.removeEventListener('pointerup', onUp);
