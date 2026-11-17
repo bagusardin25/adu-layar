@@ -5,7 +5,7 @@ export const context = {
   username: 'local_player',
   userId: 't2_local',
   postId: 't3_local',
-  subredditName: 'tebar_dev',
+  subredditName: 'AduLayangan',
 };
 
 /** In a Reddit post this opens the full-screen view; locally it just loads that page. */

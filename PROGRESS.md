@@ -1,7 +1,7 @@
 # Progres — Adu Layangan
 
 Catatan status proyek agar bisa dilanjutkan kapan saja tanpa membaca ulang percakapan.
-Terakhir diperbarui: **14 November 2026**.
+Terakhir diperbarui: **17 November 2026**.
 
 Batas kirim lomba: **Rabu 9 Desember 2026, 09.00 WIB**. Rencana lengkap di [PRD.md](PRD.md). Konsep sebelumnya (Tebar) ada di [archive/](archive/).
 
@@ -17,6 +17,23 @@ Batas kirim lomba: **Rabu 9 Desember 2026, 09.00 WIB**. Rencana lengkap di [PRD.
 | M3 | Terbang pertama, bagikan hasil, desain layangan, koleksi, Journeys, lapor | 29 Nov | Belum |
 | M4 | Rintangan, suara, ponsel, isi rekaman awal, uji pemain | 4 Des | Belum (gambar kampung dan animasi sudah dikerjakan lebih awal) |
 | M5 | README, Devpost, video, submit | 7 Des | Belum |
+
+## Perubahan 17 Nov (belum di-commit)
+
+Dikerjakan untuk menaikkan peluang menang (kriteria Polish dan Reddit-y):
+
+- **Tim kampung (F17):** tiga kampung (Hulu, Hilir, Pesisir). Setiap ronde yang dinilai menambah poinnya ke kampung pemain hari itu; kampung dengan poin terbanyak menang. Tampil di layar siap, kartu hasil, kartu feed, dan kartu skor di komentar. Pemain bisa memakai kampungnya sebagai **user flair** lewat tombol sendiri dengan pratinjau (`/api/kampung`, `/api/kampung/flair`, `src/server/core/kampung.ts`).
+- **Layar siap diringkas:** Raja Langit tampil sendiri, lawan lain dilipat jadi satu baris ("5 more in the sky"), baris jumlah pemain digabung ke papan kampung. Muat tanpa scroll di 375 × 667.
+- **Lapor masalah dari dalam app:** tombol **Report a problem** di layar siap dan kartu hasil membuka modmail subreddit dengan nomor hari terisi.
+- **Bagikan ke komentar:** satu komentar per ronde (dijaga di server, juga untuk dua ketukan bersamaan); pratinjau menyebut akun `u/nama` yang akan memposting.
+- **Label nama di langit tidak lagi bertumpuk:** label pemain dulu, lalu Raja Langit, lalu lainnya; yang tidak muat digeser atau disembunyikan sementara.
+- README dan SUBREDDIT.md diperbarui (bagian kampung, berbagi, lapor, pengaturan flair).
+- 67 uji lulus; typecheck, lint, dan build lulus.
+
+**Yang harus dicek saat playtest di Reddit:**
+1. Flair: apakah app bisa memasang user flair (`reddit.setUserFlair`) dan flair tampil di komentar. User flair harus diaktifkan di pengaturan subreddit.
+2. Komentar atas nama pemain (`runAs: 'USER'`) saat app belum disetujui.
+3. Tombol Report membuka halaman kirim pesan ke moderator di aplikasi Reddit ponsel.
 
 ## Gerbang M1: yang perlu kamu coba
 

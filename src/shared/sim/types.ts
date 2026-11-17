@@ -31,11 +31,19 @@ export const PLAYER_SHARPNESS = 1.6;
 
 export const POINTS = {
   cut: 100,
+  /** Cutting yesterday's best flyer, Raja Langit. */
+  king: 300,
   /** Lasting the whole round. */
   survive: 150,
   /** Per second left when every rival is down before time runs out. */
   perSecondLeft: 5,
 } as const;
+
+/**
+ * One sample of a recorded flight, taken 20 times a second. `f` is 0 slack, 1 pulling,
+ * 2 cut, 3 crashed. Positions are sky units; `a` is the heading in angle units.
+ */
+export type Sample = { x: number; y: number; a: number; f: number };
 
 export type Style = 'nekat' | 'gesit' | 'kalem';
 
@@ -56,7 +64,21 @@ export type RivalSpec = Handling & {
   aim: number;
 };
 
-/** One day's sky: the wind and who is flying. */
+/** A recorded flight played back in someone else's sky. */
+export type GhostSpec = {
+  id: string;
+  /** The name the flyer used. The kite tag adds "Raja ·" for the king. */
+  name: string;
+  colors: readonly [string, string];
+  anchorX: number;
+  kind: 'king' | 'ghost';
+  /** Packed samples. See `pack` in ghost.ts. */
+  track: string;
+  /** The score this flight earned, for the king's label. */
+  score: number;
+};
+
+/** One day's sky: the wind, the kampung's pilots, and the recorded flights. */
 export type Sky = {
   day: number;
   /** Steady wind, sky units per second. */
@@ -68,6 +90,10 @@ export type Sky = {
   gustRate: number;
   gustPhase: number;
   rivals: readonly RivalSpec[];
+  /** Recorded flights. Absent on a sky that has not been given any. */
+  ghosts?: readonly GhostSpec[];
+  /** The practice flight has no clock. A real round always ends. */
+  untimed?: boolean;
 };
 
 export type KiteRole = 'player' | 'rival';
@@ -106,6 +132,11 @@ export type Kite = {
   endX: number;
   endY: number;
   endA: number;
+  /** Points the player scores for cutting this kite. */
+  worth: number;
+  /** A recorded flight. The kite follows it instead of a pilot. */
+  track: Sample[] | null;
+  kind: 'player' | 'ai' | 'king' | 'ghost';
 };
 
 export type MatchEvent =

@@ -25,6 +25,7 @@ import {
   fit,
   jolt,
   resetStage,
+  shock,
 } from './draw.ts';
 import type { Floater, Pose } from './draw.ts';
 import type { Look } from './design.ts';
@@ -35,6 +36,9 @@ const STEP_MS = 1000 / TICKS_PER_SECOND;
 const MAX_STEPS_PER_FRAME = 6;
 /** The picture holds still for a moment when a string is cut, so the cut is felt. */
 const HIT_PAUSE_MS = 90;
+/** When the player's own string is cut, the sky runs slowly for a moment as the kite drifts off. */
+const SLOW_MS = 900;
+const SLOW_RATE = 0.3;
 /** How long the sky is watched after the round is decided, before the player is told. */
 const AFTER_MS: Record<EndReason, number> = {
   cut: 1200,
@@ -61,6 +65,8 @@ export type ArenaProps = {
   player: { look: Look; name: string };
   /** While true the round cannot be launched: a menu is open over the sky. */
   locked?: boolean;
+  /** The practice flight has no clock. */
+  practice?: boolean;
   /** Called once, on the first press. */
   onStart?: () => void;
   /**
@@ -97,6 +103,7 @@ export function Arena({
   mood,
   player,
   locked = false,
+  practice = false,
   onStart,
   onEnd,
   onWatchEnd,
@@ -110,10 +117,10 @@ export function Arena({
   const stringText = useRef<HTMLSpanElement>(null);
   const scoreText = useRef<HTMLSpanElement>(null);
   const callbacks = useRef({ onStart, onEnd, onWatchEnd });
-  const live = useRef({ mood, player, locked });
+  const live = useRef({ mood, player, locked, practice });
   useEffect(() => {
     callbacks.current = { onStart, onEnd, onWatchEnd };
-    live.current = { mood, player, locked };
+    live.current = { mood, player, locked, practice };
   });
 
   useEffect(() => {
@@ -139,12 +146,16 @@ export function Arena({
     let watchReported = false;
     let lastKiteTicks = 0;
     let holdUntil = 0;
+    let slowUntil = 0;
     let acc = 0;
     let last = performance.now();
     let view = fit(1, 1, 1);
     const stage = createStage();
     const floaters: Floater[] = [];
     const prev = new Map<number, { x: number; y: number; a: number }>();
+    let scoreShown = 0;
+    let frayLevel: 0 | 1 | 2 = 0;
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const resize = () => {
       const r = box.getBoundingClientRect();
@@ -201,9 +212,11 @@ export function Arena({
       // Time runs on while the rivals are watched; the string and the score are the round's.
       const ticksLeft = Math.max(0, ROUND_TICKS - show.tick);
       if (timeBar.current)
-        timeBar.current.style.transform = `scaleX(${ticksLeft / ROUND_TICKS})`;
+        timeBar.current.style.transform = `scaleX(${live.current.practice ? 1 : ticksLeft / ROUND_TICKS})`;
       if (timeText.current)
-        timeText.current.textContent = `${Math.ceil(ticksLeft / TICKS_PER_SECOND)}s`;
+        timeText.current.textContent = live.current.practice
+          ? '∞'
+          : `${Math.ceil(ticksLeft / TICKS_PER_SECOND)}s`;
       const me = match.kites[PLAYER_ID];
       const left =
         me.state === 'flying' ? Math.max(0, 1 - me.damage / healthOf(me)) : 0;
@@ -213,8 +226,31 @@ export function Arena({
       }
       if (stringText.current)
         stringText.current.textContent = `${Math.ceil(left * 100)}%`;
-      if (scoreText.current)
+      // The edges of the sky pulse red while the string is nearly gone.
+      const fray =
+        !started || match.over || me.state !== 'flying'
+          ? ''
+          : left < 0.2
+            ? 'critical'
+            : left < 0.4
+              ? 'low'
+              : '';
+      if (box.dataset.fray !== fray) box.dataset.fray = fray;
+      frayLevel = fray === 'critical' ? 2 : fray === 'low' ? 1 : 0;
+      if (scoreText.current && match.score !== scoreShown) {
+        scoreShown = match.score;
         scoreText.current.textContent = String(match.score);
+        // The score jumps when it grows.
+        if (!calm && match.score > 0)
+          scoreText.current.parentElement?.animate(
+            [
+              { transform: 'scale(1)', color: '#FFE08A' },
+              { transform: 'scale(1.38)', color: '#FFE08A', offset: 0.3 },
+              { transform: 'scale(1)' },
+            ],
+            { duration: 460, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' }
+          );
+      }
     };
 
     /** A kite's two colours, for the scraps of paper when it is cut. */
@@ -283,16 +319,25 @@ export function Arena({
           continue;
         }
         const mine = e.by === PLAYER_ID;
+        const king = mine && victim?.kind === 'king';
         floaters.push({
           x: e.x,
           y: e.y,
-          text: mine ? `PUTUS! +${e.points}` : lost ? 'PUTUS!' : 'Putus',
+          text: king
+            ? `RAJA! +${e.points}`
+            : mine
+              ? `PUTUS! +${e.points}`
+              : lost
+                ? 'PUTUS!'
+                : 'Putus',
           born: t,
           tone: lost ? 'loss' : 'gain',
         });
         jolt(stage, t, lost ? 8 : 5, lost ? RED : GOLD);
         burst(stage, e.x, e.y, coloursOf(victim), t);
+        shock(stage, e.x, e.y, t, lost ? RED : GOLD);
         hold(t, lost ? HIT_PAUSE_MS * 1.5 : HIT_PAUSE_MS);
+        if (lost) slowUntil = holdUntil + SLOW_MS;
         if (mode === 'play') sound.playCut(mine);
       }
 
@@ -336,7 +381,8 @@ export function Arena({
           tone: 'gain',
         });
         jolt(stage, t, 3);
-        burst(stage, e.x, e.y, coloursOf(victim), t, 18);
+        burst(stage, e.x, e.y, coloursOf(victim), t, 24);
+        if (e.type === 'cut') shock(stage, e.x, e.y, t);
         if (mode === 'play') {
           if (e.type === 'crash') sound.playCrash();
           else sound.playCut(false);
@@ -369,7 +415,7 @@ export function Arena({
       }
 
       if (started && t >= holdUntil) {
-        acc += dt;
+        acc += dt * (t < slowUntil ? SLOW_RATE : 1);
         let steps = 0;
         while (acc >= STEP_MS && steps < MAX_STEPS_PER_FRAME) {
           remember();
@@ -431,6 +477,7 @@ export function Arena({
           showHeading: mode === 'play',
           mood: live.current.mood,
           player: live.current.player,
+          fray: frayLevel,
         },
         stage
       );
@@ -522,7 +569,9 @@ export function Arena({
           <div className="hud" aria-hidden="true">
             <div className="hud__bars">
               <div className="hud__row">
-                <span className="hud__label">Time</span>
+                <span className="hud__label">
+                  {practice ? 'Drill' : 'Time'}
+                </span>
                 <span className="hud__bar hud__bar--time">
                   <span ref={timeBar} />
                 </span>

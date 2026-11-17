@@ -34,7 +34,7 @@ import {
 import type { Bit, Pose, Tail } from './kites.ts';
 import { blendPalette, MOOD_HOUR, moodsAt, PALETTES } from './mood.ts';
 import type { Mood, Palette } from './mood.ts';
-import { clamp, inScreen, inWorld } from './view.ts';
+import { clamp, inScreen, inWorld, TAU } from './view.ts';
 import type { Ctx, View } from './view.ts';
 
 export { fit } from './view.ts';
@@ -63,12 +63,22 @@ export type Scene = {
   mood: Mood;
   /** How the player's kite looks, and the name it flies under. */
   player: { look: Look; name: string };
+  /** How close the player's string is to going: 0 fine, 1 worn, 2 nearly gone. */
+  fray: 0 | 1 | 2;
 };
+
+const CALM =
+  typeof window !== 'undefined' &&
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** Still layers are painted this many CSS pixels larger all round, so a shake shows no edge. */
 const PAD = 8;
 const SHAKE_MS = 280;
 const FLASH_MS = 220;
+/** A ring of light spreads from the point where a string is cut. */
+const RING_MS = 460;
+
+type Ring = { x: number; y: number; born: number; colour: string };
 /** A change of time of day takes a little longer the more hours the sky turns through. */
 const TRIP_MIN_MS = 900;
 const TRIP_MS_PER_HOUR = 140;
@@ -90,6 +100,7 @@ export type Stage = {
   trip: Trip | null;
   tails: Map<number, Tail>;
   bits: Bit[];
+  rings: Ring[];
   air: Air;
   cloudShift: number;
   last: number;
@@ -107,6 +118,7 @@ export function createStage(): Stage {
     trip: null,
     tails: new Map(),
     bits: [],
+    rings: [],
     air: createAir(),
     cloudShift: 0,
     last: 0,
@@ -121,6 +133,7 @@ export function createStage(): Stage {
 export function resetStage(stage: Stage): void {
   stage.tails.clear();
   stage.bits.length = 0;
+  stage.rings.length = 0;
 }
 
 /** Shakes the picture, and optionally flashes it with a colour given as "r, g, b". */
@@ -145,10 +158,55 @@ export function burst(
   y: number,
   colours: readonly string[],
   now: number,
-  count = 26
+  count = 40
 ): void {
   throwBits(stage.bits, x, y, colours, now, count);
 }
+
+/** A ring of light from a point in the sky, in a colour given as "r, g, b". */
+export function shock(
+  stage: Stage,
+  x: number,
+  y: number,
+  now: number,
+  colour = '255, 240, 200'
+): void {
+  stage.rings.push({ x, y, born: now, colour });
+}
+
+function drawRings(ctx: Ctx, rings: Ring[], now: number): void {
+  for (let i = rings.length - 1; i >= 0; i--) {
+    const r = rings[i];
+    const t = (now - r.born) / RING_MS;
+    if (t >= 1) {
+      rings.splice(i, 1);
+      continue;
+    }
+    const out = 1 - Math.pow(1 - t, 3);
+    // A bright heart that is gone almost at once.
+    const glow = clamp(1 - t / 0.4, 0, 1);
+    if (glow > 0) {
+      const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 34);
+      g.addColorStop(0, `rgba(255, 252, 235, ${(glow * 0.85).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${r.colour}, 0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(r.x - 34, r.y - 34, 68, 68);
+    }
+    for (const [reach, width, alpha] of [
+      [70, 4.5, 0.9],
+      [44, 2, 0.55],
+    ]) {
+      ctx.strokeStyle = `rgba(${r.colour}, ${((1 - t) * alpha).toFixed(3)})`;
+      ctx.lineWidth = 0.6 + (1 - t) * width;
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, 6 + out * reach, 0, TAU);
+      ctx.stroke();
+    }
+  }
+}
+
+const easeOutBack = (t: number) =>
+  1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);
 
 function paintLayer(
   v: View,
@@ -359,6 +417,7 @@ export function drawScene(ctx: Ctx, v: View, scene: Scene, stage: Stage): void {
       ink: p.marker,
     });
   }
+  drawRings(ctx, stage.rings, now);
   drawBits(ctx, stage.bits, windOf(300), now, dt);
 
   // The kampung in front.
@@ -367,36 +426,60 @@ export function drawScene(ctx: Ctx, v: View, scene: Scene, stage: Stage): void {
   inWorld(ctx, v, sx, sy);
   drawKampungLife(ctx, match.kites, windOf(540), now, p, lookFor);
 
-  // Names under the kites. The player's own is in the accent colour, drawn last so it stays
-  // on top when kites fly close together.
+  // Names under the kites. Tags never cover each other: the player's own is placed first, then
+  // Raja Langit, then the rest, each moved down a step when its spot is taken and left out for
+  // the moment when no step is free. The player's own is in the accent colour, drawn last.
   inScreen(ctx, v, sx, sy);
   ctx.font = `600 ${Math.max(10, 11 * v.scale)}px 'Schibsted Grotesk Variable', system-ui, sans-serif`;
   ctx.textAlign = 'center';
-  const tagOrder = [
-    ...match.kites.filter((k) => k.id !== PLAYER_ID),
-    match.kites[PLAYER_ID],
-  ];
-  for (const k of tagOrder) {
-    if (k.state !== 'flying') continue;
+  const rank = (k: Kite) =>
+    k.id === PLAYER_ID ? 0 : k.kind === 'king' ? 1 : 2;
+  const placeOrder = match.kites
+    .filter((k) => k.state === 'flying')
+    .sort((a, b) => rank(a) - rank(b));
+  const taken: { l: number; r: number; t: number; b: number }[] = [];
+  const free = (l: number, r: number, t: number, b: number) =>
+    !taken.some(
+      (o) => l < o.r + 3 && r > o.l - 3 && t < o.b + 2 && b > o.t - 2
+    );
+  const tags: {
+    name: string;
+    x: number;
+    y: number;
+    w: number;
+    mine: boolean;
+  }[] = [];
+  for (const k of placeOrder) {
     const mine = k.id === PLAYER_ID;
     const name = mine ? scene.player.name : k.name;
     const pose = poses.get(k.id) ?? { x: k.x, y: k.y, angle: 0 };
-    const x = v.ox + pose.x * v.scale;
-    const y = v.oy + (pose.y + 42) * v.scale;
     const w = ctx.measureText(name).width + 10;
-    ctx.fillStyle = mine
+    // Kept inside the canvas, so a kite near the edge still shows its whole name.
+    const x = clamp(v.ox + pose.x * v.scale, w / 2 + 2, v.w - w / 2 - 2);
+    const base = v.oy + (pose.y + 42) * v.scale;
+    const y = [0, 16, 32]
+      .map((step) => base + step)
+      .find((at) => free(x - w / 2, x + w / 2, at - 10, at + 5));
+    if (y === undefined && !mine) continue;
+    const at = y ?? base;
+    taken.push({ l: x - w / 2, r: x + w / 2, t: at - 10, b: at + 5 });
+    tags.push({ name, x, y: at, w, mine });
+  }
+  for (const tag of tags.reverse()) {
+    ctx.fillStyle = tag.mine
       ? 'rgba(255, 179, 71, 0.94)'
       : 'rgba(20, 16, 40, 0.55)';
-    ctx.fillRect(x - w / 2, y - 10, w, 15);
-    ctx.fillStyle = mine ? '#2A1606' : 'rgba(255, 246, 232, 0.95)';
-    ctx.fillText(name, x, y + 1);
+    ctx.fillRect(tag.x - tag.w / 2, tag.y - 10, tag.w, 15);
+    ctx.fillStyle = tag.mine ? '#2A1606' : 'rgba(255, 246, 232, 0.95)';
+    ctx.fillText(tag.name, tag.x, tag.y + 1);
   }
 
   // Floating words.
   for (const f of scene.floaters) {
     const age = (now - f.born) / 1000;
     if (age > 1.6) continue;
-    const pop = 1 + 0.35 * clamp(1 - age / 0.18, 0, 1);
+    // The word springs up past its size and settles.
+    const pop = 0.45 + 0.55 * easeOutBack(clamp(age / 0.32, 0, 1));
     const x = v.ox + f.x * v.scale;
     const y = v.oy + f.y * v.scale - age * 34;
     ctx.globalAlpha = clamp(1 - (age - 1) / 0.6, 0, 1);
@@ -408,6 +491,26 @@ export function drawScene(ctx: Ctx, v: View, scene: Scene, stage: Stage): void {
     ctx.fillStyle = f.tone === 'gain' ? '#FFE08A' : '#FF8A7A';
     ctx.fillText(f.text, x, y);
     ctx.globalAlpha = 1;
+  }
+
+  // The edges of the sky pulse red while the player's string is nearly gone.
+  if (scene.fray > 0) {
+    const urgent = scene.fray > 1;
+    const beat = CALM ? 1 : 0.5 + 0.5 * Math.sin(now / (urgent ? 85 : 200));
+    const strength = (urgent ? 0.8 : 0.42) * (0.45 + 0.55 * beat);
+    inScreen(ctx, v);
+    const g = ctx.createRadialGradient(
+      v.w / 2,
+      v.h * 0.48,
+      Math.min(v.w, v.h) * 0.3,
+      v.w / 2,
+      v.h * 0.48,
+      Math.hypot(v.w, v.h) * 0.58
+    );
+    g.addColorStop(0, 'rgba(255, 40, 30, 0)');
+    g.addColorStop(1, `rgba(255, 40, 30, ${strength.toFixed(3)})`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, v.w, v.h);
   }
 
   // A flash when a string goes.
