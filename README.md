@@ -9,7 +9,7 @@ Fly a fighter kite with one finger. Cross a rival's string and saw through it wi
   &nbsp;
   <img src="docs/screenshots/04-flight.jpg" width="250" alt="A flight in progress: Time and String bars at the top with 400 points, kites over a volcano at sunset, and Raja Langit's kite torn apart above the roofs with the words RAJA! +300">
   &nbsp;
-  <img src="docs/screenshots/07-result.jpg" width="250" alt="The result card: Layangan putus bro!, cut by Si Kribo, 400 points, rank 5, the two kites cut including Raja Langit for 300, today's standings, +40 coins, +400 for Kampung Hilir in the lead today, and buttons to share to comments and fly again">
+  <img src="docs/screenshots/07-result.jpg" width="250" alt="The result card: Layangan putus bro!, cut by Si Kribo, 400 points, rank 5 with 2 of 3 scored flights left, +400 for Kampung Hilir in the lead today, +40 coins, Fly again and Share buttons, and the flight details and today's standings folded below">
 </p>
 <p align="center"><sub>The post in the feed · Cutting down Raja Langit · The result card</sub></p>
 
