@@ -15,9 +15,9 @@ import {
   ROUND_TICKS,
   TICKS_PER_SECOND,
 } from '../shared/sim/types.ts';
-import type { GhostSpec, Match, Sky } from '../shared/sim/types.ts';
+import type { Match, Sky } from '../shared/sim/types.ts';
 import { Arena } from './arena/Arena.tsx';
-import { lookOf, rivalLook } from './arena/design.ts';
+import { ghostLook, lookOf, rivalLook, skyLook } from './arena/design.ts';
 import { loadMood, MOODS, saveMood } from './arena/mood.ts';
 import type { Mood } from './arena/mood.ts';
 import { Coin, Wordmark } from './bits.tsx';
@@ -39,12 +39,11 @@ import { loggedIn, useProfile } from './lib/profile.ts';
 import { reportProblem } from './lib/report.ts';
 import { useWallet } from './lib/wallet.ts';
 import type { RoundAnswer, ShareAnswer, WalletView } from './lib/wallet.ts';
+import { ContestSheet } from './contest-ui.tsx';
 import { KampungBar, KampungSheet } from './kampung-ui.tsx';
+import { useContest } from './lib/contest.ts';
 import { Workshop } from './workshop.tsx';
 import { kampungNews, kampungOf } from '../shared/kampung.ts';
-
-const ghostLook = (g: GhostSpec) =>
-  rivalLook({ name: g.name, colors: g.colors });
 
 const LESSON_KEY = 'adu-layangan:lesson';
 
@@ -92,6 +91,9 @@ export function Game() {
   const kampung = useKampung();
   /** The kampung sheet is open. */
   const [picking, setPicking] = useState(false);
+  const contest = useContest();
+  /** The kite contest sheet is open. */
+  const [contesting, setContesting] = useState(false);
   useEffect(() => {
     noteReady();
     let current = true;
@@ -155,7 +157,7 @@ export function Game() {
           mood={mood}
           player={player}
           practice={!taught}
-          locked={draft !== null || picking}
+          locked={draft !== null || picking || contesting}
           onStart={() => {
             noteStart();
             if (!taught) noteLesson();
@@ -209,6 +211,7 @@ export function Game() {
         phase.name === 'ready' &&
         draft === null &&
         !picking &&
+        !contesting &&
         sky && (
           <Ready
             sky={sky}
@@ -223,6 +226,7 @@ export function Game() {
             onCustomize={() => setDraft(profile)}
             kampung={kampung.view}
             onPickKampung={() => setPicking(true)}
+            onContest={() => setContesting(true)}
           />
         )}
       {taught && phase.name === 'ready' && !sky && (
@@ -243,6 +247,15 @@ export function Game() {
             setPhase((p) => (p.name === 'down' ? { ...p, watching: true } : p))
           }
           onResult={showResult}
+        />
+      )}
+      {contesting && (
+        <ContestSheet
+          view={contest.view}
+          load={contest.load}
+          onEnter={contest.enter}
+          myLook={lookOf(profile.design)}
+          onDone={() => setContesting(false)}
         />
       )}
       {picking && (
@@ -294,6 +307,7 @@ function Ready({
   onCustomize,
   kampung,
   onPickKampung,
+  onContest,
 }: {
   sky: Sky;
   day: number;
@@ -307,6 +321,7 @@ function Ready({
   onCustomize: () => void;
   kampung: KampungView;
   onPickKampung: () => void;
+  onContest: () => void;
 }) {
   const mine = kampung.kampung ? kampungOf(kampung.kampung) : null;
   return (
@@ -344,7 +359,7 @@ function Ready({
           </p>
         )}
         <Kampungs view={kampung} fliers={fliers} onPick={onPickKampung} />
-        <Rivals sky={sky} king={king} />
+        <Rivals sky={sky} king={king} onContest={onContest} />
         <div className="sky-pick" role="group" aria-label="Time of day">
           {MOODS.map((m) => (
             <button
@@ -420,9 +435,12 @@ function Kampungs({
 function Rivals({
   sky,
   king,
+  onContest,
 }: {
   sky: Sky;
   king: { name: string; score: number; seed: boolean } | null;
+  /** Opens the contest that chooses the kite Raja Langit flies. */
+  onContest: () => void;
 }) {
   const ghosts = sky.ghosts ?? [];
   const raja = ghosts.find((g) => g.kind === 'king');
@@ -445,7 +463,7 @@ function Rivals({
   return (
     <div className="rivals">
       {raja && (
-        <p className="rival rival--king">
+        <button type="button" className="rival rival--king" onClick={onContest}>
           <KiteThumb look={ghostLook(raja)} size={26} />
           <span>
             <strong>Raja Langit · {raja.name}</strong>{' '}
@@ -453,8 +471,13 @@ function Rivals({
               {king?.seed ? 'Kampung champion' : 'Yesterday’s best'} ·{' '}
               {raja.score} · worth 300
             </span>
+            <span className="rival__contest">
+              {raja.chosen
+                ? `u/${raja.chosen.by}’s kite, voted in ›`
+                : 'Vote for tomorrow’s kite ›'}
+            </span>
           </span>
-        </p>
+        </button>
       )}
       {others.length > 0 && (
         <details className="rivals__more">
@@ -870,7 +893,7 @@ function Result({
               return (
                 <li key={`${k.id}-${e.tick}`}>
                   <span className="lines__kite">
-                    <KiteThumb look={rivalLook(k)} size={20} />
+                    <KiteThumb look={skyLook(k, match.sky)} size={20} />
                     {k.name}
                   </span>
                   <span>+{e.points}</span>

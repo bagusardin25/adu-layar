@@ -12,7 +12,7 @@ import type {
   TailId,
 } from '../../shared/kite.ts';
 import { MOTIFS, SHAPES } from '../../shared/kite.ts';
-import type { Kite } from '../../shared/sim/types.ts';
+import type { GhostSpec, Kite, Sky } from '../../shared/sim/types.ts';
 import { TAU } from './view.ts';
 import type { Ctx } from './view.ts';
 
@@ -55,6 +55,25 @@ export function rivalLook(k: Pick<Kite, 'name' | 'colors'>): Look {
     tail: 'pita',
     line: 'biasa',
   };
+}
+
+/** A recorded flight's kite: the kampung's chosen kite for the king, its flyer's colours otherwise. */
+export function ghostLook(g: GhostSpec): Look {
+  return g.chosen
+    ? lookOf(g.chosen.design)
+    : rivalLook({ name: g.name, colors: g.colors });
+}
+
+/** A rival in the sky. Raja Langit flies the kite the kampung chose, when there is one. */
+export function skyLook(
+  k: Pick<Kite, 'name' | 'colors' | 'kind'>,
+  sky: Sky
+): Look {
+  const chosen =
+    k.kind === 'king'
+      ? sky.ghosts?.find((g) => g.kind === 'king')?.chosen
+      : undefined;
+  return chosen ? lookOf(chosen.design) : rivalLook(k);
 }
 
 type Shape = {

@@ -18,7 +18,7 @@ import {
   paintLand,
 } from './backdrop.ts';
 import type { Air } from './backdrop.ts';
-import { rivalLook, tailYOf } from './design.ts';
+import { skyLook, tailYOf } from './design.ts';
 import type { Look } from './design.ts';
 import { drawKampungLife, paintKampung } from './kampung.ts';
 import {
@@ -341,7 +341,7 @@ export function drawScene(ctx: Ctx, v: View, scene: Scene, stage: Stage): void {
   const px = 1 / v.scale;
   const windOf = (y: number) => windAt(match.sky, tick, y).x;
   const lookFor = (k: Kite): Look =>
-    k.id === PLAYER_ID ? scene.player.look : rivalLook(k);
+    k.id === PLAYER_ID ? scene.player.look : skyLook(k, match.sky);
 
   // The sky, then the sun and moon, then the land they rise and set behind.
   inWorld(ctx, v, sx, sy);
