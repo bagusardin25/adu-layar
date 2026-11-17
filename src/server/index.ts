@@ -9,6 +9,8 @@ import {
   redis,
 } from '@devvit/web/server';
 import { skyForFight } from './core/fight.ts';
+import { kampungBoard } from './core/kampung.ts';
+import { dailyTitle } from './core/posts.ts';
 import { createApp } from './app.ts';
 
 const app = createApp({
@@ -28,9 +30,9 @@ const app = createApp({
   postId: () => context.postId,
   createPost: async (day) => {
     const fight = await skyForFight(redis, day);
-    const who = fight.king?.name ?? 'the kampung';
+    const { yesterday } = await kampungBoard(redis, day);
     return reddit.submitCustomPost({
-      title: `Adu Layangan · Day ${day} · Cut down ${who}`,
+      title: dailyTitle(day, fight.king?.name ?? null, yesterday),
       postData: { day },
     });
   },

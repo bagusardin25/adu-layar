@@ -47,6 +47,10 @@ function localServer(): Plugin {
         },
         subredditName: () => 'AduLayangan',
         createPost: async (day) => ({ id: `t3_local${day}_${++posts}` }),
+        // Stands in for Reddit's user flair, so the flair offer can be tried here.
+        setFlair: async ({ username, text }) => {
+          console.info(`[local] flair for u/${username}: ${text}`);
+        },
       });
       const listener = getRequestListener(app.fetch);
       server.middlewares.use((req, res, next) => {

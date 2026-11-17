@@ -8,9 +8,11 @@ import { createApp } from './app.ts';
 import type { AppDeps } from './app.ts';
 import { skyForFight } from './core/fight.ts';
 import { createMemoryStore } from './core/memoryStore.ts';
+import { dailyTitle } from './core/posts.ts';
 
 type KampungAnswer = {
   guest: boolean;
+  name: string | null;
   kampung: string | null;
   flair: string | null;
   canFlair: boolean;
@@ -76,6 +78,7 @@ test('joining a kampung needs a login and a kampung from the list', async () => 
   const joined = await send<KampungAnswer>('/api/kampung', { kampung: 'hulu' });
   assert.equal(joined.status, 200);
   assert.equal(joined.data.kampung, 'hulu');
+  assert.equal(joined.data.name, 'ani');
   assert.equal(joined.data.canFlair, false);
 
   player.current = null;
@@ -182,4 +185,15 @@ test('the score card names the kampung the points went to', async () => {
   await send('/api/round', { day, taps: [] });
   const card = await send<{ text: string }>('/api/share', { confirm: false });
   assert.match(card.data.text, /for Kampung Pesisir/);
+});
+
+test('the day’s post title names Raja Langit and yesterday’s winning kampung', () => {
+  assert.equal(
+    dailyTitle(7, 'Bang Petir', 'hulu'),
+    'Adu Layangan · Day 7 · Cut down Bang Petir · Kampung Hulu won yesterday'
+  );
+  assert.equal(
+    dailyTitle(1, null, null),
+    'Adu Layangan · Day 1 · Cut down the kampung'
+  );
 });

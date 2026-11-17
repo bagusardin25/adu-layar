@@ -1,5 +1,7 @@
 // The daily post. One per day, however many callers ask at once.
 
+import { kampungOf } from '../../shared/kampung.ts';
+import type { KampungId } from '../../shared/kampung.ts';
 import type { Store } from './store.ts';
 
 /** A logged-in player, or null for someone browsing logged out. */
@@ -34,4 +36,23 @@ export async function ensureDailyPost(
     await store.hDel(POSTS, [String(day)]);
     throw error;
   }
+}
+
+/**
+ * The day's post title, as it shows in the feed: the day, Raja Langit to cut down, and the
+ * kampung that won yesterday, so the rivalry is visible before anyone opens the post.
+ */
+export function dailyTitle(
+  day: number,
+  king: string | null,
+  yesterdayWinner: KampungId | null
+): string {
+  const parts = [
+    'Adu Layangan',
+    `Day ${day}`,
+    `Cut down ${king ?? 'the kampung'}`,
+  ];
+  if (yesterdayWinner)
+    parts.push(`${kampungOf(yesterdayWinner).label} won yesterday`);
+  return parts.join(' · ');
 }

@@ -85,7 +85,7 @@ export function KampungSheet({
     view.board.today.map((k) => [k.id, k.points])
   ) as Record<KampungId, number>;
   const mine = view.kampung ? kampungOf(view.kampung) : null;
-  const who = context.username ? `u/${context.username}` : 'you';
+  const who = view.name ? `u/${view.name}` : 'you';
 
   return (
     <div className="overlay overlay--workshop">

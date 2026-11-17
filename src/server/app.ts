@@ -207,7 +207,7 @@ export function createApp(deps: AppDeps): Hono {
           id: postId,
           as: 'APP',
           sticky: true,
-          text: 'Reply here with your flight. The card shows your score, who you cut, and whether Raja Langit is still up.',
+          text: 'Reply here with your flight. The card shows your score, who you cut, whether Raja Langit is still up, and which kampung your points went to.',
         });
         parent = anchor.id;
         await deps.store.set(threadKey, parent);
@@ -241,6 +241,8 @@ export function createApp(deps: AppDeps): Hono {
       : { kampung: null, flair: null };
     return {
       guest: !player,
+      /** The Reddit username a flair would be worn by. */
+      name: player?.name ?? null,
       ...member,
       canFlair: Boolean(deps.setFlair),
       board: await kampungBoard(deps.store, today(req)),

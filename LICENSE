@@ -1,0 +1,38 @@
+Adu Layangan
+Copyright (c) 2026 bagusardin25. All rights reserved.
+
+The source code, artwork, text and other material in this repository are
+published so they can be read and reviewed, including by the judges of
+Reddit's Game of the Day Hackathon. Publishing them does not grant any
+licence to them.
+
+Without prior written permission from the copyright holder, you may not copy,
+modify, merge, publish, distribute, sublicense or sell this material or any
+part of it, or use it to build or run another app or game. Viewing it, and
+forking it on GitHub as GitHub's Terms of Service allow, are permitted.
+
+THE MATERIAL IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY ARISING FROM THE MATERIAL OR ITS USE.
+
+-------------------------------------------------------------------------------
+Third-party material
+-------------------------------------------------------------------------------
+
+The notice above does not cover the third-party material below, which keeps
+its own licence.
+
+Fonts bundled with the game, both under the SIL Open Font License, Version 1.1
+(https://openfontlicense.org):
+
+  Bricolage Grotesque
+  Copyright 2022 The Bricolage Grotesque Project Authors
+  (https://github.com/ateliertriay/bricolage)
+
+  Schibsted Grotesk
+  Copyright 2023 The Schibsted-Grotesk Project Authors
+  (https://github.com/schibsted/schibsted-grotesk)
+
+Open-source packages the app is built with, including React, Hono and the
+Devvit SDK, keep their own licences, which are included with each package
+(see package.json for the list).

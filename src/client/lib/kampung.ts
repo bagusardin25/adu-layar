@@ -6,6 +6,8 @@ import { rankKampungs } from '../../shared/kampung.ts';
 
 export type KampungView = {
   guest: boolean;
+  /** The player's Reddit username, when logged in. */
+  name: string | null;
   kampung: KampungId | null;
   flair: KampungId | null;
   /** False outside Reddit, where no flair can be set. */
@@ -15,6 +17,7 @@ export type KampungView = {
 
 const EMPTY: KampungView = {
   guest: true,
+  name: null,
   kampung: null,
   flair: null,
   canFlair: false,
