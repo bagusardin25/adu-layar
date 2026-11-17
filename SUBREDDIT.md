@@ -71,4 +71,4 @@ A daily kite fight: fly your kite with one finger and cut your rivals' strings o
 
 ## Old posts
 
-Posts made while the app was still Tebar keep their old titles. New posts are titled `Adu Layangan · Day N · Cut down {Raja Langit}`.
+Posts made while the app was still Tebar keep their old titles. New posts are titled `Adu Layangan · Day N · Cut down {Raja Langit} · {Kampung} won yesterday`; the last part is left out when no kampung won the day before.
