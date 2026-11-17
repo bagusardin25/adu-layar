@@ -7,6 +7,7 @@
 import { decide } from './ai.ts';
 import { clamp, length } from './geometry.ts';
 import { stringBend, touch, tracePoints } from './line.ts';
+import { SAMPLE_EVERY, sampleAt, unpack } from './ghost.ts';
 import { PLAYER_ANCHOR_X, PLAYER_COLOURS, PLAYER_HANDLING } from './sky.ts';
 import { ANG, cosA, dirX, dirY, sinA, wrap } from './trig.ts';
 import {
@@ -26,7 +27,7 @@ import {
   TICKS_PER_SECOND,
   TOP_Y,
 } from './types.ts';
-import type { Contact, EndReason, Kite, Match, Sky } from './types.ts';
+import type { Contact, EndReason, Kite, Match, Sample, Sky } from './types.ts';
 import { windAt } from './wind.ts';
 
 // ───────────────────────────── Flight ─────────────────────────────
@@ -76,6 +77,8 @@ const FLUTTER_SWING = 46;
 const FLUTTER_ROCK = 150;
 /** Ticks over which a cut kite stops pointing where it was heading and starts to rock. */
 const FLUTTER_SETTLE = 36;
+/** A recorded kite left because its own flight ended, not because someone here cut it. */
+const LEFT = -3;
 
 type KiteBase = Omit<
   Kite,
@@ -94,7 +97,14 @@ type KiteBase = Omit<
   | 'endX'
   | 'endY'
   | 'endA'
->;
+  | 'worth'
+  | 'track'
+  | 'kind'
+> & {
+  worth?: number;
+  track?: Sample[] | null;
+  kind?: Kite['kind'];
+};
 
 function kite(id: number, base: KiteBase): Kite {
   return {
@@ -114,6 +124,9 @@ function kite(id: number, base: KiteBase): Kite {
     endX: 0,
     endY: 0,
     endA: 0,
+    worth: base.worth ?? (base.role === 'player' ? 0 : POINTS.cut),
+    track: base.track ?? null,
+    kind: base.kind ?? (base.role === 'player' ? 'player' : 'ai'),
   };
 }
 
@@ -143,8 +156,28 @@ export function createMatch(sky: Sky): Match {
         ay: HAND_Y,
         x: r.anchorX,
         y: 250 + i * 25,
+        kind: 'ai',
       })
     ),
+    ...(sky.ghosts ?? []).map((g, i) => {
+      const track = unpack(g.track);
+      const first = track[0];
+      return kite(sky.rivals.length + 1 + i, {
+        role: 'rival',
+        name: g.kind === 'king' ? `Raja · ${g.name}` : g.name,
+        style: null,
+        colors: g.colors,
+        handling: PLAYER_HANDLING,
+        aim: 1,
+        ax: g.anchorX,
+        ay: HAND_Y,
+        x: first?.x ?? g.anchorX,
+        y: first?.y ?? 280,
+        worth: g.kind === 'king' ? POINTS.king : POINTS.cut,
+        track,
+        kind: g.kind,
+      });
+    }),
   ];
   return {
     sky,
@@ -312,18 +345,38 @@ function finish(match: Match, reason: EndReason, points: number): void {
  * involve the player count: the rivals are all after the player, and a rival cutting another
  * would take away the player's target. `freeForAll` lifts that, for when the player is down.
  */
+/** A recorded kite is where its flyer was, not where today's wind would take it. */
+function follow(k: Kite, tick: number): void {
+  const track = k.track;
+  if (!track) return;
+  const s = sampleAt(track, tick);
+  const prev = sampleAt(track, Math.max(0, tick - SAMPLE_EVERY));
+  if (!s || !prev) return;
+  const dt = SAMPLE_EVERY * DT;
+  k.vx = (s.x - prev.x) / dt;
+  k.vy = (s.y - prev.y) / dt;
+  k.x = s.x;
+  k.y = s.y;
+  k.a = s.a;
+  k.pull = s.f === 1;
+  if (k.pull) k.slack += (0 - k.slack) * TIGHTEN;
+  else k.slack += (1 - k.slack) * LOOSEN;
+}
+
 function fly(match: Match, playerPull: boolean, freeForAll: boolean): void {
   const { sky, tick } = match;
   const flying = match.kites.filter((k) => k.state === 'flying');
 
   // Everyone decides on the same picture of the sky, then everyone moves.
+  // A recording has already been flown: it is placed, not piloted.
   const pulls = flying.map((k) =>
-    k.role === 'player' ? playerPull : decide(k, match)
+    k.track ? k.pull : k.role === 'player' ? playerPull : decide(k, match)
   );
   flying.forEach((k, i) => {
-    k.pull = pulls[i];
+    if (k.track) follow(k, tick);
+    else k.pull = pulls[i];
   });
-  for (const k of flying) move(k, sky, tick);
+  for (const k of flying) if (!k.track) move(k, sky, tick);
   for (const k of match.kites) if (k.state === 'cut') drift(k, sky, tick);
 
   // Strings that touch rub each other.
@@ -355,7 +408,30 @@ function fly(match: Match, playerPull: boolean, freeForAll: boolean): void {
       if (dirY(k.a) > 0) k.a = wrap(ANG / 2 - k.a);
       fray(k, ROOF, ROOF_DAMAGE, k);
     }
-    if (k.damage < healthOf(k)) continue;
+    const recorded = k.track ? sampleAt(k.track, tick) : undefined;
+    if (k.damage < healthOf(k)) {
+      // Their own flight ended (they were cut or landed that day). Nobody here scored it.
+      if (recorded && recorded.f >= 2) {
+        k.endTick = tick;
+        k.endA = k.a > ANG / 2 ? k.a - ANG : k.a;
+        k.hitBy = LEFT;
+        k.state = recorded.f === 3 ? 'crashed' : 'cut';
+        match.events.push(
+          k.state === 'crashed'
+            ? { type: 'crash', tick, victim: k.id, x: k.x, y: k.y }
+            : {
+                type: 'cut',
+                tick,
+                victim: k.id,
+                by: LEFT,
+                x: k.x,
+                y: k.y,
+                points: 0,
+              }
+        );
+      }
+      continue;
+    }
     k.endTick = tick;
     k.endA = k.a > ANG / 2 ? k.a - ANG : k.a;
     if (k.hitBy === ROOF) {
@@ -370,7 +446,7 @@ function fly(match: Match, playerPull: boolean, freeForAll: boolean): void {
     } else {
       k.state = 'cut';
       const byPlayer = k.hitBy === PLAYER_ID;
-      const points = byPlayer ? POINTS.cut : 0;
+      const points = byPlayer ? k.worth : 0;
       if (byPlayer) {
         match.cuts += 1;
         match.score += points;
@@ -401,16 +477,21 @@ export function step(match: Match, playerPull: boolean): void {
   } else if (
     match.kites.every((k) => k.role === 'player' || k.state !== 'flying')
   ) {
-    const secondsLeft = Math.floor(
-      (ROUND_TICKS - match.tick) / TICKS_PER_SECOND
+    const secondsLeft = Math.max(
+      0,
+      Math.floor((ROUND_TICKS - match.tick) / TICKS_PER_SECOND)
     );
     finish(
       match,
       'cleared',
-      POINTS.survive + POINTS.perSecondLeft * secondsLeft
+      match.sky.untimed
+        ? 0
+        : POINTS.survive + POINTS.perSecondLeft * secondsLeft
     );
-  } else if (match.tick >= ROUND_TICKS) {
-    finish(match, 'time', POINTS.survive);
+  } else if (match.tick >= ROUND_TICKS * (match.sky.untimed ? 5 : 1)) {
+    // A practice flight has no clock on screen. Five minutes is only a backstop, so a
+    // round that never ends cannot keep the server busy.
+    finish(match, 'time', match.sky.untimed ? 0 : POINTS.survive);
   }
 }
 
@@ -444,19 +525,43 @@ export function watch(match: Match): boolean {
  */
 export type Taps = number[];
 
+function taken(k: Kite): Sample {
+  return {
+    x: Math.round(k.x),
+    y: Math.round(k.y),
+    a: k.a,
+    f: k.state === 'crashed' ? 3 : k.state === 'cut' ? 2 : k.pull ? 1 : 0,
+  };
+}
+
 /** Plays a whole round from its taps. This is how the server scores a round. */
 export function replay(sky: Sky, taps: Taps): Match {
+  return playTaps(sky, taps).match;
+}
+
+/**
+ * Plays a round and keeps the player's kite, 20 times a second, so the flight can be
+ * someone else's rival tomorrow. The match is the same one `replay` returns.
+ */
+export function playTaps(
+  sky: Sky,
+  taps: Taps
+): { match: Match; samples: Sample[] } {
   const match = createMatch(sky);
+  const samples: Sample[] = [];
   let i = 0;
   let pull = false;
   while (!match.over) {
+    if (match.tick % SAMPLE_EVERY === 0)
+      samples.push(taken(match.kites[PLAYER_ID]));
     while (i < taps.length && taps[i] <= match.tick) {
       pull = !pull;
       i += 1;
     }
     step(match, pull);
   }
-  return match;
+  samples.push(taken(match.kites[PLAYER_ID]));
+  return { match, samples };
 }
 
 /** True when taps are well formed: whole, non-negative, strictly increasing, within the round. */
