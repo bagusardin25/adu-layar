@@ -121,8 +121,9 @@
   }
 }
 
-/* The bars appear once the round starts. */
-.game[data-phase='ready'] .hud {
+/* The bars appear once the round starts, and give way to the result card. */
+.game[data-phase='ready'] .hud,
+.game[data-phase='over'] .hud {
   display: none;
 }
 
@@ -843,12 +844,6 @@
 }
 
 /* The coins a round earned, on the result card. */
-.earned {
-  display: grid;
-  justify-items: center;
-  gap: 2px;
-}
-
 .earned__total {
   display: inline-flex;
   align-items: center;
@@ -1051,26 +1046,83 @@
   font-weight: 700;
 }
 
-.trophies {
+.result__best {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+}
+
+/* Fly again first, sharing beside it. */
+.result__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--s-2);
 }
 
-.trophy {
+/* Everything past the score, folded until asked for. */
+.result__more {
+  width: 100%;
+  border-radius: var(--radius);
+  background: var(--stage-2);
+  text-align: left;
+}
+
+.result__more summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: 44px;
+  padding: 0 var(--s-3);
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  list-style: none;
+}
+
+.result__more summary::-webkit-details-marker {
+  display: none;
+}
+
+.result__more summary::after {
+  content: '▾';
+  color: var(--ink-3);
+}
+
+.result__more[open] summary::after {
+  content: '▴';
+}
+
+.result__more[open] {
+  display: grid;
+  gap: var(--s-2);
+  padding-bottom: var(--s-3);
+}
+
+/* Inset from the edges; the lists drop their full width so they stay inside. */
+.result__more > :not(summary) {
+  width: auto;
+  margin: 0 var(--s-3);
+}
+
+.result__more-label {
+  margin-top: var(--s-2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.result__more .result__best {
+  text-align: center;
+}
+
+.lines__kite {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
-  border-radius: 99px;
-  background: var(--stage-3);
-  font-size: var(--step--1);
-}
-
-.result__best {
-  font-size: var(--step--1);
-  color: var(--ink-3);
 }
 
 /* The way to the moderators: always there, never in the way of a launch. */
@@ -1125,18 +1177,6 @@
 
   .result .earned__total {
     animation: score-in 520ms cubic-bezier(0.2, 1.6, 0.4, 1) 1000ms both;
-  }
-
-  .trophy {
-    animation: score-in 420ms cubic-bezier(0.2, 1.5, 0.4, 1) 620ms both;
-  }
-
-  .trophy:nth-child(2) {
-    animation-delay: 720ms;
-  }
-
-  .trophy:nth-child(3) {
-    animation-delay: 820ms;
   }
 }
 

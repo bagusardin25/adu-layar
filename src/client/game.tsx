@@ -562,7 +562,11 @@ function Earned({
   guest: boolean;
 }) {
   if (guest)
-    return <p className="earned__note">Log in to Reddit to earn coins.</p>;
+    return (
+      <p className="earned__note">
+        Log in to Reddit to earn coins and share your flight.
+      </p>
+    );
   if (answer === undefined)
     return <p className="earned__note">Counting your coins…</p>;
   if (answer === null)
@@ -584,16 +588,9 @@ function Earned({
       </p>
     );
   return (
-    <div className="earned">
-      <p className="earned__total">
-        <Coin size={18} />+{answer.coins.earned} coins
-      </p>
-      {answer.coins.lines.length > 0 && (
-        <p className="earned__lines">
-          {answer.coins.lines.map((l) => `${l.label} +${l.coins}`).join(' · ')}
-        </p>
-      )}
-    </div>
+    <p className="earned__total">
+      <Coin size={18} />+{answer.coins.earned} coins
+    </p>
   );
 }
 
@@ -808,116 +805,123 @@ function Result({
               : 'Scored flight'}
           {answer && answer.streak > 1 ? ` · ${answer.streak}-day streak` : ''}
           {answer?.wallet
-            ? ` · ${answer.wallet.spoolsLeft} of 3 scored flights left`
+            ? answer.wallet.spoolsLeft > 0
+              ? ` · ${answer.wallet.spoolsLeft} of 3 scored flights left`
+              : ' · no scored flights left today'
             : ''}
         </p>
 
-        <ul className="lines">
-          {cut.map((e) => {
-            const k = e.type === 'cut' ? match.kites[e.victim] : null;
-            if (!k || e.type !== 'cut') return null;
-            return (
-              <li key={`${k.id}-${e.tick}`}>
-                <span>{k.name}</span>
-                <span>+{e.points}</span>
-              </li>
-            );
-          })}
-          {reason === 'time' && (
-            <li>
-              <span>Lasted {seconds} s</span>
-              <span>+{POINTS.survive}</span>
-            </li>
-          )}
-          {reason === 'cleared' && end?.type === 'end' && (
-            <li>
-              <span>Cleared with {secondsLeft} s left</span>
-              <span>+{end.points}</span>
-            </li>
-          )}
-          {(reason === 'cut' || reason === 'crashed') && (
-            <li>
-              <span>Lasted {seconds} s</span>
-              <span>+0</span>
-            </li>
-          )}
-        </ul>
-
-        {cut.length > 0 && (
-          <div className="trophies" aria-label="Kites you cut">
-            {cut.map((e) => {
-              const k = e.type === 'cut' ? match.kites[e.victim] : null;
-              return k ? (
-                <span key={k.id} className="trophy">
-                  <KiteThumb look={rivalLook(k)} size={22} />
-                  {k.name}
-                </span>
-              ) : null;
-            })}
-          </div>
-        )}
-
-        {answer && answer.standings.length > 0 && (
-          <ol className="standings" aria-label="Today's best flights">
-            {answer.standings.map((row) => (
-              <li key={row.rank}>
-                <span>
-                  {row.rank}. {row.name}
-                </span>
-                <span>{row.score}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-
-        <Earned answer={answer} guest={guest} />
         <KampungLine answer={answer} guest={guest} />
+        <Earned answer={answer} guest={guest} />
 
-        {guest ? (
-          <p className="earned__note">Log in to Reddit to share this flight.</p>
-        ) : (
+        <div className="result__actions">
+          <button type="button" className="btn btn--primary" onClick={onAgain}>
+            Fly again
+          </button>
+          {!guest && !card && (
+            <button
+              type="button"
+              className="btn"
+              disabled={answer == null || busy}
+              onClick={() => void ask(false)}
+            >
+              Share
+            </button>
+          )}
+        </div>
+
+        {!guest && card && (
           <div className="share">
-            {card && <pre className="share__card">{card}</pre>}
+            <pre className="share__card">{card}</pre>
             {note && <p className="share__note">{note}</p>}
             <div className="share__actions">
-              {!card ? (
+              {shared?.canPost && !shared.posted && (
                 <button
                   type="button"
-                  className="btn"
-                  disabled={answer == null || busy}
-                  onClick={() => void ask(false)}
+                  className="btn btn--primary"
+                  disabled={busy}
+                  onClick={() => void ask(true)}
                 >
-                  Share to comments
+                  Post comment
                 </button>
-              ) : (
-                <>
-                  {shared?.canPost && !shared.posted && (
-                    <button
-                      type="button"
-                      className="btn btn--primary"
-                      disabled={busy}
-                      onClick={() => void ask(true)}
-                    >
-                      Post comment
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="btn"
-                    onClick={() => void copyCard()}
-                  >
-                    Copy
-                  </button>
-                </>
               )}
+              <button
+                type="button"
+                className="btn"
+                onClick={() => void copyCard()}
+              >
+                Copy
+              </button>
             </div>
           </div>
         )}
+        {!guest && !card && note && <p className="share__note">{note}</p>}
 
-        <button type="button" className="btn btn--primary" onClick={onAgain}>
-          Fly again
-        </button>
-        <p className="result__best">Best today: {shownBest}</p>
+        <details className="result__more">
+          <summary>
+            {answer && answer.standings.length > 0
+              ? 'Flight details and today’s standings'
+              : 'Flight details'}
+          </summary>
+          <ul className="lines">
+            {cut.map((e) => {
+              const k = e.type === 'cut' ? match.kites[e.victim] : null;
+              if (!k || e.type !== 'cut') return null;
+              return (
+                <li key={`${k.id}-${e.tick}`}>
+                  <span className="lines__kite">
+                    <KiteThumb look={rivalLook(k)} size={20} />
+                    {k.name}
+                  </span>
+                  <span>+{e.points}</span>
+                </li>
+              );
+            })}
+            {reason === 'time' && (
+              <li>
+                <span>Lasted {seconds} s</span>
+                <span>+{POINTS.survive}</span>
+              </li>
+            )}
+            {reason === 'cleared' && end?.type === 'end' && (
+              <li>
+                <span>Cleared with {secondsLeft} s left</span>
+                <span>+{end.points}</span>
+              </li>
+            )}
+            {(reason === 'cut' || reason === 'crashed') && (
+              <li>
+                <span>Lasted {seconds} s</span>
+                <span>+0</span>
+              </li>
+            )}
+          </ul>
+          {answer && answer.counted && answer.coins.lines.length > 0 && (
+            <p className="earned__lines">
+              Coins:{' '}
+              {answer.coins.lines
+                .map((l) => `${l.label} +${l.coins}`)
+                .join(' · ')}
+            </p>
+          )}
+          {answer && answer.standings.length > 0 && (
+            <p className="result__more-label">Today’s best</p>
+          )}
+          {answer && answer.standings.length > 0 && (
+            <ol className="standings" aria-label="Today's best flights">
+              {answer.standings.map((row) => (
+                <li key={row.rank}>
+                  <span>
+                    {row.rank}. {row.name}
+                  </span>
+                  <span>{row.score}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+          <p className="result__best">Your best today: {shownBest}</p>
+        </details>
+
         <Report day={day} />
       </section>
     </div>
