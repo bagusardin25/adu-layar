@@ -6,12 +6,20 @@
 
 import { COIN_ROUNDS, COINS, coinsFor, total } from '../../shared/coins.ts';
 import type { CoinLine } from '../../shared/coins.ts';
-import { itemOf } from '../../shared/kite.ts';
+import { colourHex, itemOf } from '../../shared/kite.ts';
 import type { ItemId } from '../../shared/kite.ts';
-import { replay } from '../../shared/sim/match.ts';
+import { isKampung } from '../../shared/kampung.ts';
+import type { KampungBoard, KampungId } from '../../shared/kampung.ts';
+import type { Card } from '../../shared/card.ts';
+import { playTaps } from '../../shared/sim/match.ts';
 import type { Taps } from '../../shared/sim/match.ts';
-import { skyForDay } from '../../shared/sim/sky.ts';
-import type { EndReason } from '../../shared/sim/types.ts';
+import { pack } from '../../shared/sim/ghost.ts';
+import { PLAYER_ID } from '../../shared/sim/types.ts';
+import type { EndReason, Match } from '../../shared/sim/types.ts';
+import { saveFlight, skyForFight, standingsFor, rankOf } from './fight.ts';
+import type { Standing } from './fight.ts';
+import { addPoints, kampungBoard } from './kampung.ts';
+import { loadProfile } from './profiles.ts';
 import { KEEP_SECONDS } from './posts.ts';
 import type { Store } from './store.ts';
 
@@ -68,7 +76,43 @@ export type RoundResult = {
   counted: boolean;
   coins: { lines: CoinLine[]; earned: number };
   wallet: Wallet;
+  /** This player's best counted score today, after the round. */
+  best: number;
+  rank: number | null;
+  streak: number;
+  kingCut: boolean;
+  /** Names of the kites this round cut, as they appear in the sky. */
+  names: string[];
+  standings: Standing[];
+  /** The kampung this round's points went to; null when it was not scored or has none. */
+  kampung: KampungId | null;
+  /** The day's kampung points, after this round. */
+  kampungs: KampungBoard;
 };
+
+const lastKey = (id: string) => `last:${id}`;
+/**
+ * Marks the last flight's card as posted to the comments, so it is posted once. Each new flight
+ * clears it, since that flight has a card of its own.
+ */
+export const sharedKey = (id: string) => `shared:${id}`;
+
+/** Kites the player cut in this round, and whether one of them was Raja Langit. */
+export function playerCuts(match: Match): {
+  names: string[];
+  kingCut: boolean;
+} {
+  const names: string[] = [];
+  let kingCut = false;
+  for (const event of match.events) {
+    if (event.type !== 'cut' || event.by !== PLAYER_ID) continue;
+    const kite = match.kites[event.victim];
+    if (!kite) continue;
+    names.push(kite.name);
+    if (kite.kind === 'king') kingCut = true;
+  }
+  return { names, kingCut };
+}
 
 /**
  * Scores a round from its taps and pays its coins. Only the first COIN_ROUNDS rounds of a day
@@ -77,20 +121,23 @@ export type RoundResult = {
 export async function playRound(
   store: Store,
   playerId: string,
+  playerName: string,
   day: number,
   taps: Taps
 ): Promise<RoundResult> {
-  const match = replay(skyForDay(day), taps);
+  const fight = await skyForFight(store, day);
+  const { match, samples } = playTaps(fight.sky, taps);
   await loadWallet(store, playerId, day);
 
   const flown = await store.hIncrBy(spoolsKey(day), playerId, 1);
   await store.expire(spoolsKey(day), KEEP_SECONDS);
   const counted = flown <= COIN_ROUNDS;
   let lines: CoinLine[] = [];
+  let streak: number;
+  let kampung: KampungId | null = null;
 
   if (counted) {
     const first = flown === 1;
-    let streak = 0;
     if (first) {
       const fields = await store.hGetAll(walletKey(playerId));
       const lastDay = Number(fields.lastDay) || 0;
@@ -100,25 +147,116 @@ export async function playRound(
         lastDay: String(day),
         streak: String(streak),
       });
+    } else {
+      const fields = await store.hGetAll(walletKey(playerId));
+      streak = Number(fields.streak) || 0;
     }
     lines = coinsFor(match, { firstOfDay: first, streak });
     const earned = total(lines);
     if (earned > 0) await store.hIncrBy(walletKey(playerId), 'coins', earned);
-    const best = await store.zScore(boardKey(day), playerId);
-    if (best === undefined || match.score > best)
+    const previous = await store.zScore(boardKey(day), playerId);
+    if (previous === undefined || match.score > previous) {
       await store.zAdd(boardKey(day), { member: playerId, score: match.score });
+      const { profile } = await loadProfile(store, {
+        id: playerId,
+        name: playerName,
+      });
+      await saveFlight(store, day, {
+        id: playerId,
+        name: playerName,
+        score: match.score,
+        colors: [
+          colourHex(profile.design.main),
+          colourHex(profile.design.trim),
+        ],
+        track: pack(samples),
+      });
+    }
     await store.expire(boardKey(day), KEEP_SECONDS);
     await keep(store, playerId);
+    // Every scored flight counts for the kampung, not only the day's best.
+    kampung = await addPoints(store, day, playerId, match.score);
+  } else {
+    const fields = await store.hGetAll(walletKey(playerId));
+    streak = Number(fields.streak) || 0;
   }
 
-  return {
+  const cut = playerCuts(match);
+  const best = (await store.zScore(boardKey(day), playerId)) ?? 0;
+  const rank = await rankOf(store, day, playerId);
+  const standings = await standingsFor(store, day);
+  const result: RoundResult = {
     score: match.score,
     cuts: match.cuts,
     reason: match.reason,
     counted,
     coins: { lines, earned: total(lines) },
     wallet: await loadWallet(store, playerId, day),
+    best,
+    rank,
+    streak,
+    kingCut: cut.kingCut,
+    names: cut.names,
+    standings,
+    kampung,
+    kampungs: await kampungBoard(store, day),
   };
+  await store.set(
+    lastKey(playerId),
+    JSON.stringify({
+      day,
+      score: result.score,
+      reason: result.reason,
+      kingCut: result.kingCut,
+      rank: result.rank,
+      streak: result.streak,
+      names: result.names,
+      counted: result.counted,
+      kampung: result.kampung,
+    })
+  );
+  await store.expire(lastKey(playerId), KEEP_SECONDS);
+  await store.del(sharedKey(playerId));
+  return result;
+}
+
+/** The last round this player finished, if it is still kept. */
+export async function lastFlight(
+  store: Store,
+  playerId: string
+): Promise<Card | null> {
+  const raw = await store.get(lastKey(playerId));
+  if (!raw) return null;
+  try {
+    const data = JSON.parse(raw) as {
+      day?: unknown;
+      score?: unknown;
+      reason?: unknown;
+      kingCut?: unknown;
+      rank?: unknown;
+      streak?: unknown;
+      names?: unknown;
+      counted?: unknown;
+      kampung?: unknown;
+    };
+    if (typeof data.day !== 'number' || typeof data.score !== 'number')
+      return null;
+    return {
+      day: data.day,
+      score: data.score,
+      reason: typeof data.reason === 'string' ? data.reason : null,
+      kingCut: data.kingCut === true,
+      rank: typeof data.rank === 'number' ? data.rank : null,
+      streak: typeof data.streak === 'number' ? data.streak : 0,
+      names: Array.isArray(data.names)
+        ? data.names.filter((n): n is string => typeof n === 'string')
+        : [],
+      counted: data.counted === true,
+      kampung: isKampung(data.kampung) ? data.kampung : null,
+    };
+  } catch {
+    return null;
+  }
 }
 
 export type BuyResult =

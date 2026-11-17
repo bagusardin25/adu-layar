@@ -5,16 +5,33 @@
 
 import { Hono } from 'hono';
 import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
+import { flightCard } from '../shared/card.ts';
 import { dayNumber } from '../shared/days.ts';
-import { ensureDailyPost } from './core/posts.ts';
+import { ensureDailyPost, KEEP_SECONDS } from './core/posts.ts';
 import type { Player } from './core/posts.ts';
 import { loadProfile, saveProfile } from './core/profiles.ts';
-import { buyItem, loadWallet, ownedItems, playRound } from './core/wallet.ts';
+import {
+  joinKampung,
+  kampungBoard,
+  loadMember,
+  noteFlair,
+} from './core/kampung.ts';
+import { isKampung, kampungOf } from '../shared/kampung.ts';
+import { skyForFight, standingsFor } from './core/fight.ts';
+import {
+  buyItem,
+  lastFlight,
+  loadWallet,
+  ownedItems,
+  playerCuts,
+  playRound,
+  sharedKey,
+} from './core/wallet.ts';
 import { COIN_ROUNDS } from '../shared/coins.ts';
 import { missingItems, parseProfile } from '../shared/kite.ts';
-import { replay, validTaps } from '../shared/sim/match.ts';
-import { skyForDay } from '../shared/sim/sky.ts';
+import { playTaps, validTaps } from '../shared/sim/match.ts';
 import type { Store } from './core/store.ts';
+import { mountTelemetry } from './telemetry.ts';
 
 export type AppDeps = {
   store: Store;
@@ -26,10 +43,32 @@ export type AppDeps = {
   subredditName: (req: Request) => string;
   /** Creates the Reddit post for a day. */
   createPost: (day: number) => Promise<{ id: string }>;
+  /** The Reddit post this request is playing inside, when there is one. */
+  postId?: (req: Request) => string | undefined;
+  /**
+   * Posts a comment as the app or as the player. Absent in tests and the local preview:
+   * sharing then returns the text without posting it.
+   */
+  comment?: (args: {
+    id: string;
+    text: string;
+    as: 'APP' | 'USER';
+    sticky?: boolean;
+  }) => Promise<{ id: string }>;
+  /**
+   * Sets a player's user flair in the subreddit. Absent in tests and the local preview, where
+   * the game offers no flair.
+   */
+  setFlair?: (args: {
+    username: string;
+    text: string;
+    backgroundColor: string;
+  }) => Promise<void>;
 };
 
 export function createApp(deps: AppDeps): Hono {
   const app = new Hono();
+  mountTelemetry(app);
 
   app.onError((error, c) => {
     console.error('Unexpected error', error);
@@ -53,6 +92,24 @@ export function createApp(deps: AppDeps): Hono {
   }
 
   // ───────────── Rounds, coins and the shop ─────────────
+
+  app.get('/api/fight', async (c) => {
+    const day = today(c.req.raw);
+    const fight = await skyForFight(deps.store, day);
+    return c.json({
+      day,
+      ...fight,
+      kampungs: await kampungBoard(deps.store, day),
+    });
+  });
+
+  app.get('/api/board', async (c) => {
+    const day = today(c.req.raw);
+    return c.json({
+      day,
+      standings: await standingsFor(deps.store, day, 8),
+    });
+  });
 
   app.get('/api/wallet', async (c) => {
     const player = await deps.player(c.req.raw);
@@ -79,7 +136,9 @@ export function createApp(deps: AppDeps): Hono {
       return c.json({ error: 'That round could not be read.' }, 400);
     const player = await deps.player(c.req.raw);
     if (!player) {
-      const match = replay(skyForDay(day), taps);
+      const fight = await skyForFight(deps.store, day);
+      const { match } = playTaps(fight.sky, taps);
+      const cut = playerCuts(match);
       return c.json({
         score: match.score,
         cuts: match.cuts,
@@ -87,9 +146,79 @@ export function createApp(deps: AppDeps): Hono {
         counted: false,
         coins: { lines: [], earned: 0 },
         wallet: null,
+        best: 0,
+        rank: null,
+        streak: 0,
+        kingCut: cut.kingCut,
+        names: cut.names,
+        standings: await standingsFor(deps.store, day),
+        kampung: null,
+        kampungs: await kampungBoard(deps.store, day),
       });
     }
-    return c.json(await playRound(deps.store, player.id, day, taps));
+    return c.json(
+      await playRound(deps.store, player.id, player.name, day, taps)
+    );
+  });
+
+  /**
+   * The score card for the comments. `confirm` posts it, as the player, under the day's
+   * thread. Without it, the route only returns the text so the player can read it first,
+   * along with the name it would be posted under (`as`) and whether it can be posted here.
+   * A flight's card is posted once: a second confirm answers `posted` and posts nothing.
+   */
+  app.post('/api/share', async (c) => {
+    const player = await deps.player(c.req.raw);
+    if (!player) return c.json({ error: 'Log in to post your flight.' }, 401);
+    const last = await lastFlight(deps.store, player.id);
+    if (!last) return c.json({ error: 'Fly a round first.' }, 400);
+    const text = flightCard(last);
+    const as = player.name;
+    const comment = deps.comment;
+    // Outside Reddit (the local preview, tests) there is nowhere to post.
+    if (!comment) return c.json({ text, posted: false, canPost: false, as });
+
+    const postId = deps.postId?.(c.req.raw);
+    if (!postId)
+      return c.json({
+        text,
+        posted: false,
+        canPost: false,
+        as,
+        error: 'Open today’s post to share.',
+      });
+
+    const shared = sharedKey(player.id);
+    const { confirm } = await body(c.req.raw);
+    if (confirm !== true) {
+      const posted = (await deps.store.hGet(shared, 'posted')) !== undefined;
+      return c.json({ text, posted, canPost: true, as });
+    }
+
+    // Claimed before posting, so a double tap or two requests at once post one comment.
+    if ((await deps.store.hSetNX(shared, 'posted', '1')) === 0)
+      return c.json({ text, posted: true, canPost: true, as });
+    await deps.store.expire(shared, KEEP_SECONDS);
+    try {
+      const threadKey = `thread:${last.day}`;
+      let parent = await deps.store.get(threadKey);
+      if (!parent) {
+        const anchor = await comment({
+          id: postId,
+          as: 'APP',
+          sticky: true,
+          text: 'Reply here with your flight. The card shows your score, who you cut, and whether Raja Langit is still up.',
+        });
+        parent = anchor.id;
+        await deps.store.set(threadKey, parent);
+      }
+      await comment({ id: parent, as: 'USER', text });
+    } catch (error) {
+      // Nothing was posted for the player, so they can try again.
+      await deps.store.hDel(shared, ['posted']);
+      throw error;
+    }
+    return c.json({ text, posted: true, canPost: true, as });
   });
 
   app.post('/api/shop/buy', async (c) => {
@@ -100,6 +229,52 @@ export function createApp(deps: AppDeps): Hono {
     return result.ok
       ? c.json({ wallet: result.wallet })
       : c.json({ error: result.error }, result.status);
+  });
+
+  // ───────────── Kampungs ─────────────
+
+  /** The player's kampung, the day's kampung points, and whether flair can be worn here. */
+  const kampungView = async (req: Request) => {
+    const player = await deps.player(req);
+    const member = player
+      ? await loadMember(deps.store, player.id)
+      : { kampung: null, flair: null };
+    return {
+      guest: !player,
+      ...member,
+      canFlair: Boolean(deps.setFlair),
+      board: await kampungBoard(deps.store, today(req)),
+    };
+  };
+
+  app.get('/api/kampung', async (c) => c.json(await kampungView(c.req.raw)));
+
+  app.post('/api/kampung', async (c) => {
+    const player = await deps.player(c.req.raw);
+    if (!player) return c.json({ error: 'Log in to fly for a kampung.' }, 401);
+    const { kampung } = await body(c.req.raw);
+    if (!isKampung(kampung))
+      return c.json({ error: 'That kampung is not one we know.' }, 400);
+    await joinKampung(deps.store, player.id, kampung);
+    return c.json(await kampungView(c.req.raw));
+  });
+
+  /** Wears the player's kampung as their user flair. Only ever from the player's own tap. */
+  app.post('/api/kampung/flair', async (c) => {
+    const player = await deps.player(c.req.raw);
+    if (!player) return c.json({ error: 'Log in to wear a flair.' }, 401);
+    if (!deps.setFlair)
+      return c.json({ error: 'Flair can only be set on Reddit.' }, 400);
+    const { kampung } = await loadMember(deps.store, player.id);
+    if (!kampung) return c.json({ error: 'Pick a kampung first.' }, 400);
+    const place = kampungOf(kampung);
+    await deps.setFlair({
+      username: player.name,
+      text: place.label,
+      backgroundColor: place.colour,
+    });
+    await noteFlair(deps.store, player.id, kampung);
+    return c.json(await kampungView(c.req.raw));
   });
 
   // ───────────── The player's kite and name ─────────────
