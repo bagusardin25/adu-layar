@@ -52,6 +52,8 @@ Every day at 00:00 UTC there is a new sky, the same for everyone: a new wind, th
 
 **Share** your flight from the result card. It posts under the day's thread.
 
+**Raja's kite.** Enter your kite from the game. The kite with the most upvotes in the day's kite contest is the one Raja Langit flies tomorrow.
+
 *Adu layangan* is Indonesian for "kite fighting", played from the rooftops every dry season.
 ```
 

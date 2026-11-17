@@ -5,7 +5,7 @@
 Fly a fighter kite with one finger. Cross a rival's string and saw through it with yours. One sky a day, the same for everyone, and yesterday's best flyer comes back as the boss.
 
 <p align="center">
-  <img src="docs/screenshots/01-feed.jpg" width="250" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, a rival's kite bursts into paper scraps under the words PUTUS! +100, and below it the day, Raja Langit joko_benang, 5 flyers today, Kampung Pesisir leads today, and a Play button">
+  <img src="docs/screenshots/01-feed.jpg" width="250" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, a rival's kite bursts into paper scraps under the words PUTUS! +100, Raja Langit flies a pink star kite the kampung voted for, and below it the day, Raja Langit joko_benang, 6 flyers today, Kampung Hilir leads today, and a Play button">
   &nbsp;
   <img src="docs/screenshots/04-flight.jpg" width="250" alt="A flight in progress: Time and String bars at the top with 400 points, kites over a volcano at sunset, and Raja Langit's kite torn apart above the roofs with the words RAJA! +300">
   &nbsp;
@@ -17,7 +17,7 @@ Fly a fighter kite with one finger. Cross a rival's string and saw through it wi
 
 Every day at 00:00 UTC the subreddit gets a new sky: a new wind, three rival flyers from the kampung, and **Raja Langit**, the best flight from the day before, played back as it was flown. A round lasts 60 seconds. You hold to pull your string and let go to steer, and where your string crosses a rival's, the faster one saws through the slower. Your best of three scored flights is kept.
 
-Every flight counts for a side. Players fly for one of three kampungs, and the kampung with the most points wins the day. You can wear your kampung as your flair, post your score card in the day's thread, and tomorrow your own flight may be the king everyone else is trying to cut down.
+Every flight counts for a side. Players fly for one of three kampungs, and the kampung with the most points wins the day. You can wear your kampung as your flair and post your score card in the day's thread. And the subreddit dresses the king: players enter their own kites in the day's thread, and the kite with the most upvotes is the one Raja Langit flies tomorrow. Tomorrow your flight may be the king everyone is trying to cut down, or your kite the one it flies.
 
 It is for anyone who wants a one-minute game a day, and for communities that want a daily ritual to play together. For moderators, the app runs itself: it posts the day's sky on its own and keeps nothing about a player for more than 30 days.
 
@@ -30,7 +30,8 @@ _Adu layangan_ is Indonesian for "kite fighting", played from the rooftops every
 3. **You fly up to three scored flights.** The best one is kept on today's standings; after three, you can practise as much as you like.
 4. **Your points go to your kampung.** The ready screen shows who leads; the result card shows what your flight added.
 5. **You share your flight** as a comment under the day's pinned thread, if you want to.
-6. **Tomorrow, the best flight flies again** as Raja Langit, worth 300 points to whoever cuts it, and the next two best fly beside it.
+6. **You enter your kite** in the day's kite contest, and upvote the kites you like in the thread.
+7. **Tomorrow, the best flight flies again** as Raja Langit, worth 300 points to whoever cuts it, wearing the kite the subreddit voted for, and the next two best flights fly beside it.
 
 ## How to play
 
@@ -63,13 +64,16 @@ Your string is glass-coated (_benang gelasan_): it takes about twice as much rub
 ## Played together
 
 <p align="center">
-  <img src="docs/screenshots/03-ready.jpg" width="250" alt="The ready screen: the player Neng Cilok flying for Kampung Hilir with 100 coins and 3 of 3 scored flights left, the kampung board with Pesisir 1300, Hilir 1200 and Hulu 1100, Raja Langit joko_benang worth 300, five more kites folded into one line, and the time of day set to dusk">
+  <img src="docs/screenshots/03-ready.jpg" width="250" alt="The ready screen: the player Neng Cilok flying for Kampung Hilir with 140 coins and 2 of 3 scored flights left, the kampung board with Hilir 1600, Pesisir 1300 and Hulu 1100, Raja Langit joko_benang worth 300 flying u/wulan_kite's kite, voted in, five more kites folded into one line, and the time of day set to dusk">
+  &nbsp;
+  <img src="docs/screenshots/08-contest.jpg" width="250" alt="The Raja's kite sheet: flying today is u/wulan_kite's pink star kite with 14 upvotes yesterday, an Enter my kite button that posts the kite as a comment from u/sekar_layang, and today's five kites ranked by upvotes from u/putu_pesisir with 18 to u/rara_senja with 16, each opening its comment to upvote">
   &nbsp;
   <img src="docs/screenshots/05-kampung.jpg" width="250" alt="The kampung sheet: Kampung Hulu up the river, Kampung Hilir down the river (chosen) and Kampung Pesisir by the sea with today's points, and a preview of the flair u/sekar_layang Kampung Hilir with a Wear as my flair button">
 </p>
 
 - **Three kampungs.** Pick **Hulu** (up the river), **Hilir** (down the river) or **Pesisir** (by the sea). Every scored flight adds its points to your kampung for the day, the kampung with the most points wins it, and the next day's post says who won. You can move to another kampung at any time; points already earned stay where they were earned.
 - **Kampung flair.** Wear your kampung as your user flair, so it shows next to your name in the comments. The game shows you exactly how it will look and sets it only when you tap **Wear as my flair**.
+- **Raja's kite, chosen by votes.** Enter your kite from the game and it is posted, as your own comment, under the day's kite contest. Upvote the kites you like right there in the thread. When the day ends, the kite with the most upvotes becomes the kite Raja Langit flies the next day, with its maker named on the ready screen. The game reads the upvotes; it never rewards anyone for voting.
 - **Raja Langit and recorded flights.** Every scored flight is recorded. Yesterday's best comes back as today's boss, and the next two fly beside it, so the rivals in the sky are other players of the subreddit. A flight you make today can be someone's rival tomorrow. On a day with no recordings yet, the kampung's own flyers take those places.
 - **The day's thread.** The result card can post your flight as a short score card, as your own comment, in reply to the day's pinned thread. You see the exact text and the account it will be posted from before anything is posted, and each flight is posted at most once.
 - **Today's standings** appear on every result card, so you know where you stand after each flight.
@@ -93,7 +97,8 @@ Before a round you can also pick the time of day the sky is drawn in: morning, n
 - **Everyone flies the same sky.** The day's wind and rivals come from the date, so every player meets the same fight.
 - **Scores cannot be faked.** The game sends only the moments you pressed and let go. The server replays the round on the same sky and counts the score and coins itself.
 - **No pay to win.** Coins buy looks only.
-- **Little is kept, and not for long.** Your kite and name, your kampung, your coins and the looks you bought, your best score of each day and the recording of that flight. Everything about a player is deleted 30 days after it last changed.
+- **Votes stay on Reddit.** The kite contest is decided by ordinary upvotes on ordinary comments. Nothing in the game rewards voting, and deleting your entry's comment takes your kite out of the contest.
+- **Little is kept, and not for long.** Your kite and name, your kampung, your coins and the looks you bought, your best score of each day and the recording of that flight, and the kites you entered. Everything about a player is deleted 30 days after it last changed.
 - **Nothing leaves Reddit.** The app makes no requests outside Reddit, and comments and flair are only ever made from your own tap.
 
 ## Built for phones
@@ -104,6 +109,7 @@ The game is drawn for a phone held upright and played with one thumb; a mouse or
 
 - Installing the app creates the day's post, and a new one goes up every day at 00:00 UTC. To create it by hand, open the subreddit menu and choose **Post today's sky**.
 - For kampung flair to show next to names, turn on user flair in the subreddit's settings. The app sets each player's flair only when that player asks for it.
+- The first kite entered each day makes the app post a short **Kite contest** comment on the day's post; entries are replies to it. Removing an entry's comment removes the kite from the contest.
 - **Report a problem**, on the ready screen and the result card, opens a message to the subreddit's moderators with the day already filled in.
 
 ## Reporting a problem
@@ -116,7 +122,7 @@ Requires Node 22.12 or newer.
 
 ```bash
 npm install
-npm test              # 68 tests: flight, cutting, replay, scoring, coins, kampungs, sharing
+npm test              # 80 tests: flight, cutting, replay, scoring, coins, kampungs, sharing, the kite contest
 npm run dev:local     # the whole game in a browser at http://localhost:5180/game.html, without Reddit
 npm run dev           # playtest on Reddit (needs `npm run login` first)
 npm run build         # the bundle Reddit runs
@@ -132,7 +138,7 @@ src/server/       endpoints that run on Reddit's servers: rounds, coins, kampung
 
 - **Deterministic simulation.** Angles are whole numbers and the sine table is the game's own instead of `Math.sin`, so the same taps produce the same round on every device. The server scores each round by replaying the player's taps, and recorded flights are replayed the same way.
 - **What you see is what is scored.** The string the simulation tests for a touch is the same curve that is drawn (`src/shared/sim/line.ts`), so sparks always sit on the strings you see.
-- **The local preview is the real server.** `npm run dev:local` runs the same routes with an in-memory store and stand-ins for Reddit's user, comments and flair.
+- **The local preview is the real server.** `npm run dev:local` runs the same routes with an in-memory store and stand-ins for Reddit's user, comments, upvotes and flair.
 - **Devvit Journeys** record when a flight starts and ends and when a card is shared.
 
 ## Credits
