@@ -1,8 +1,9 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "tebar-game",
+  "name": "adu-layangan",
   "permissions": {
-    "redis": true
+    "redis": true,
+    "journeys": true
   },
   "post": {
     "dir": "dist/client",
@@ -44,7 +45,7 @@
     }
   },
   "dev": {
-    "subreddit": "TebarGame"
+    "subreddit": "AduLayangan"
   },
   "scripts": {
     "dev": "vite build --watch",

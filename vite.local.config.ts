@@ -45,7 +45,7 @@ function localServer(): Plugin {
           const day = Number(cookie(req, 'tebar_post_day'));
           return Number.isInteger(day) && day > 0 ? day : undefined;
         },
-        subredditName: () => 'tebar_dev',
+        subredditName: () => 'AduLayangan',
         createPost: async (day) => ({ id: `t3_local${day}_${++posts}` }),
       });
       const listener = getRequestListener(app.fetch);
