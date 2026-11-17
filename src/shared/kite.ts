@@ -178,6 +178,31 @@ export function parseProfile(x: unknown): Profile | null {
   };
 }
 
+/** A kite design rebuilt from untrusted data, or null if any part is not one of the choices. */
+export function parseDesign(x: unknown): KiteDesign | null {
+  return (
+    parseProfile({ design: x, name: { title: 'none', nick: 'elang' } })
+      ?.design ?? null
+  );
+}
+
+/** The kite in words, for a comment: "Fighter · Kawung · Red and White · Ribbon tail". */
+export function describeKite(design: KiteDesign): string {
+  const label = (list: readonly Option<string>[], id: string) =>
+    list.find((o) => o.id === id)?.label ?? id;
+  const main = label(COLOURS, design.main);
+  const trim = label(COLOURS, design.trim);
+  const parts = [
+    label(SHAPES, design.shape),
+    label(MOTIFS, design.motif),
+    main === trim ? main : `${main} and ${trim}`,
+    `${label(TAILS, design.tail)} tail`,
+  ];
+  if (design.line !== 'biasa')
+    parts.push(`${label(LINES, design.line)} string`);
+  return parts.join(' · ');
+}
+
 /** The name as it is shown: "Bang Petir", or just "Petir". */
 export function nameOf(name: FlyerName): string {
   const title = TITLES.find((t) => t.id === name.title)?.label ?? '';
