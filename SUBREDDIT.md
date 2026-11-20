@@ -4,17 +4,16 @@ The app players and judges should see is **Adu Layangan**, on **r/AduLayangan**.
 
 An app that was already uploaded as `tebar-game` cannot be renamed, and neither can `r/TebarGame`. Leave that install as it is. The next upload, when you choose to publish, creates the new app. This repository does not upload by itself.
 
-## Create the subreddit
+## Deploy, in order
 
-`u/bagusardin_` is logged in. **r/AduLayangan does not exist yet**, and Devvit 0.15 has no command that creates a subreddit by itself.
+The app must run on Reddit to be judged. Uploading and installing are done from this folder with the Devvit CLI, logged in as the app's owner (`npx devvit whoami`).
 
-`adu-layangan` is a new app name, so Reddit does not know it yet. Playtest stopped with: the app does not exist until `npx devvit init`. That command opens a browser, gives you a code, and registers the new app. It was not run. `devvit upload` and `devvit publish` were not run either.
-
-After the app exists:
-
-```bash
-npx devvit playtest AduLayangan
-```
+1. **Create r/AduLayangan** on reddit.com: a public community. It must stay under 200 members while the app is unpublished. The CLI cannot create a subreddit.
+2. **Register the app.** `adu-layangan` is a new name. Try `npx devvit upload` first; if it says the app does not exist, run `npx devvit init`, which opens the browser, gives you a code, and registers the app from this folder.
+3. **Check and upload.** `npm run deploy` runs the typecheck, the linter and the tests, then `devvit upload`. Upload only; do not run `devvit publish` for the hackathon.
+4. **Install it:** `npx devvit install r/AduLayangan`. Installing posts today's sky. If no post appears, use the subreddit menu, **Post today's sky**.
+5. **Turn on the settings below**, then open the day's post on a phone and try a flight, **Share**, **Wear as my flair**, **Enter my kite** and **Report a problem**.
+6. For live changes while testing, `npx devvit playtest AduLayangan` installs a fresh build on every save and streams the logs.
 
 An install named `tebar-game` on `r/TebarGame` cannot be renamed. Leave it.
 
