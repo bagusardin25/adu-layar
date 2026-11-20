@@ -8,6 +8,7 @@ import { place } from '../../shared/sim/ghost.ts';
 import { seedGhosts } from '../../shared/sim/seeds.ts';
 import { skyForDay } from '../../shared/sim/sky.ts';
 import type { GhostSpec, Sky } from '../../shared/sim/types.ts';
+import { chosenKite } from './contest.ts';
 import { KEEP_SECONDS } from './posts.ts';
 import type { Store } from './store.ts';
 
@@ -113,6 +114,11 @@ export async function skyForFight(store: Store, day: number): Promise<Fight> {
     if (ghosts.some((g) => Math.abs(g.anchorX - seed.anchorX) < 24)) continue;
     ghosts.push(seed);
   }
+
+  // Raja Langit flies the kite the kampung chose yesterday, once that contest is settled.
+  const chosen = await chosenKite(store, day - 1);
+  const kingAt = ghosts.findIndex((g) => g.kind === 'king');
+  if (chosen && kingAt >= 0) ghosts[kingAt] = { ...ghosts[kingAt], chosen };
 
   const king = ghosts.find((g) => g.kind === 'king') ?? null;
   return {

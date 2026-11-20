@@ -17,6 +17,19 @@ import {
   noteFlair,
 } from './core/kampung.ts';
 import { isKampung, kampungOf } from '../shared/kampung.ts';
+import { entryText } from '../shared/contest.ts';
+import type { ContestView } from '../shared/contest.ts';
+import {
+  claimEntry,
+  contestThread,
+  dropEntry,
+  hasEntered,
+  rankedEntries,
+  saveEntry,
+  setContestThread,
+  settleContest,
+} from './core/contest.ts';
+import type { Scores } from './core/contest.ts';
 import { skyForFight, standingsFor } from './core/fight.ts';
 import {
   buyItem,
@@ -64,7 +77,13 @@ export type AppDeps = {
     text: string;
     backgroundColor: string;
   }) => Promise<void>;
+  /** Upvotes on comments, for the kite contest. Absent in tests of other things. */
+  commentScores?: Scores;
 };
+
+/** A link to a comment on Reddit, where it can be read and upvoted. */
+const permalink = (subreddit: string, postId: string, commentId: string) =>
+  `https://www.reddit.com/r/${subreddit}/comments/${postId.replace(/^t3_/, '')}/comment/${commentId.replace(/^t1_/, '')}/`;
 
 export function createApp(deps: AppDeps): Hono {
   const app = new Hono();
@@ -75,8 +94,18 @@ export function createApp(deps: AppDeps): Hono {
     return c.json({ error: 'Something went wrong on our side.' }, 500);
   });
 
-  const postToday = (req: Request) =>
-    ensureDailyPost(deps.store, dayNumber(deps.now(req)), deps.createPost);
+  /** Settles yesterday's kite contest, so the new day's Raja Langit flies the winning kite. */
+  const settleYesterday = (req: Request) =>
+    settleContest(deps.store, dayNumber(deps.now(req)) - 1, deps.commentScores);
+
+  const postToday = async (req: Request) => {
+    await settleYesterday(req);
+    return ensureDailyPost(
+      deps.store,
+      dayNumber(deps.now(req)),
+      deps.createPost
+    );
+  };
 
   const today = (req: Request) => dayNumber(deps.now(req));
 
@@ -95,6 +124,7 @@ export function createApp(deps: AppDeps): Hono {
 
   app.get('/api/fight', async (c) => {
     const day = today(c.req.raw);
+    await settleYesterday(c.req.raw);
     const fight = await skyForFight(deps.store, day);
     return c.json({
       day,
@@ -277,6 +307,92 @@ export function createApp(deps: AppDeps): Hono {
     });
     await noteFlair(deps.store, player.id, kampung);
     return c.json(await kampungView(c.req.raw));
+  });
+
+  // ───────────── The kite contest ─────────────
+
+  const contestView = async (req: Request): Promise<ContestView> => {
+    const player = await deps.player(req);
+    const day = today(req);
+    const flying = await settleYesterday(req);
+    const ranked = await rankedEntries(
+      deps.store,
+      day,
+      deps.now(req),
+      deps.commentScores
+    );
+    const subreddit = deps.subredditName(req);
+    const entered = player
+      ? await hasEntered(deps.store, day, player.id)
+      : false;
+    const postDay = deps.postDay(req);
+    const inTodaysPost =
+      Boolean(deps.postId?.(req)) && (postDay === undefined || postDay === day);
+    return {
+      day,
+      entries: ranked.map((e) => ({
+        by: e.by,
+        design: e.design,
+        votes: e.votes,
+        link: permalink(subreddit, e.postId, e.commentId),
+        mine: e.userId === player?.id,
+      })),
+      flying,
+      guest: !player,
+      name: player?.name ?? null,
+      entered,
+      canEnter: Boolean(player && deps.comment && inTodaysPost && !entered),
+    };
+  };
+
+  app.get('/api/contest', async (c) => c.json(await contestView(c.req.raw)));
+
+  /**
+   * Enters the player's saved kite in today's contest: a comment, posted as the player, in
+   * reply to the app's contest comment on today's post. One kite per player per day.
+   */
+  app.post('/api/contest/enter', async (c) => {
+    const player = await deps.player(c.req.raw);
+    if (!player) return c.json({ error: 'Log in to enter your kite.' }, 401);
+    const day = today(c.req.raw);
+    const comment = deps.comment;
+    const postId = deps.postId?.(c.req.raw);
+    const postDay = deps.postDay(c.req.raw);
+    if (!comment || !postId || (postDay !== undefined && postDay !== day))
+      return c.json({ error: 'Open today’s post to enter your kite.' }, 400);
+    if (!(await claimEntry(deps.store, day, player.id)))
+      return c.json({ error: 'Your kite is already in today’s contest.' }, 409);
+    try {
+      const { profile } = await loadProfile(deps.store, player);
+      let parent = await contestThread(deps.store, day);
+      if (!parent) {
+        const anchor = await comment({
+          id: postId,
+          as: 'APP',
+          text: `Kite contest, Day ${day}. Kites are entered from the game and appear as replies here. The kite with the most upvotes when the day ends is the kite Raja Langit flies on Day ${day + 1}.`,
+        });
+        parent = anchor.id;
+        await setContestThread(deps.store, day, parent);
+      }
+      const posted = await comment({
+        id: parent,
+        as: 'USER',
+        text: entryText(day, profile.design),
+      });
+      await saveEntry(deps.store, day, {
+        userId: player.id,
+        by: player.name,
+        design: profile.design,
+        commentId: posted.id,
+        postId,
+        at: deps.now(c.req.raw),
+      });
+    } catch (error) {
+      // Nothing of the player's was posted, so they can try again.
+      await dropEntry(deps.store, day, player.id);
+      throw error;
+    }
+    return c.json(await contestView(c.req.raw));
   });
 
   // ───────────── The player's kite and name ─────────────

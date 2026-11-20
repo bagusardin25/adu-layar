@@ -493,6 +493,7 @@ export function Arena({
           now: t,
           tick: shown,
           showHeading: mode === 'play',
+          showTags: mode === 'attract' || started || live.current.practice,
           mood: live.current.mood,
           player: live.current.player,
           fray: frayLevel,

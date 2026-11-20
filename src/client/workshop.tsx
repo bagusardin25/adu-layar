@@ -247,7 +247,7 @@ export function Workshop({
           <button
             ref={done}
             type="button"
-            className="btn btn--primary workshop__done"
+            className="btn workshop__done"
             onClick={onDone}
           >
             Done

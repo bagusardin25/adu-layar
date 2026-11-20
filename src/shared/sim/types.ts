@@ -1,6 +1,8 @@
 // The shapes and numbers of the kite fight. Everything is in "sky units": the sky is 360 wide
 // and 640 tall, y grows downwards, and the rooftops where flyers stand are near the bottom.
 
+import type { ChosenKite } from '../contest.ts';
+
 /** Simulation steps per second. A round is a whole number of steps, never wall-clock time. */
 export const TICKS_PER_SECOND = 60;
 export const DT = 1 / TICKS_PER_SECOND;
@@ -76,6 +78,11 @@ export type GhostSpec = {
   track: string;
   /** The score this flight earned, for the king's label. */
   score: number;
+  /**
+   * The king only: the kite the kampung voted for in yesterday's contest, flown in place of the
+   * flyer's own colours. It changes how the kite looks, never how it flies.
+   */
+  chosen?: ChosenKite;
 };
 
 /** One day's sky: the wind, the kampung's pilots, and the recorded flights. */

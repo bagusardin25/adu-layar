@@ -97,6 +97,8 @@ p {
 
 /* ───────────────────────────── Buttons ───────────────────────────── */
 
+/* A plain button is drawn in ink: an outline, no fill. The one action that moves the player on
+   is a red tab with a pressed lip, like a kite's paper folded over its edge string. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -104,9 +106,10 @@ p {
   gap: var(--s-2);
   min-height: 48px;
   padding: 0 var(--s-5);
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  background: var(--stage-3);
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--ink);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: var(--step-1);
@@ -115,33 +118,49 @@ p {
   transition:
     background-color 160ms var(--ease),
     border-color 160ms var(--ease),
+    box-shadow 120ms var(--ease),
     transform 120ms var(--ease);
 }
 
 .btn:hover {
-  background: var(--stage-4);
+  border-color: var(--ink-2);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
 }
 
 .btn:active {
   transform: translateY(1px);
 }
 
+/* Cream edge on the sky, dark red edge on paper (set by .paper). */
 .btn--primary {
-  background: var(--brass);
-  border-color: var(--brass);
-  color: var(--on-brass);
+  border: 2px solid var(--btn-edge, var(--on-red));
+  background: var(--kite-red);
+  color: var(--on-red);
+  box-shadow: 0 3px 0 var(--kite-red-dark);
 }
 
 .btn--primary:hover {
-  background: var(--brass-strong);
-  border-color: var(--brass-strong);
+  border-color: var(--btn-edge, var(--on-red));
+  background: var(--kite-red-hover);
+}
+
+.btn--primary:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--kite-red-dark);
+}
+
+.btn--primary:focus-visible {
+  box-shadow:
+    0 3px 0 var(--kite-red-dark),
+    var(--focus);
 }
 
 .btn:disabled {
   cursor: default;
-  background: var(--stage-2);
+  background: transparent;
   border-color: var(--line);
   color: var(--ink-3);
+  box-shadow: none;
   transform: none;
 }
 

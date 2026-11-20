@@ -102,7 +102,7 @@ export function KampungSheet({
           <button
             ref={done}
             type="button"
-            className="btn btn--primary sheet__done"
+            className="btn sheet__done"
             onClick={onDone}
           >
             Done

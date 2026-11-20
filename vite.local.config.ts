@@ -28,11 +28,19 @@ function cookie(req: Request, name: string): string | undefined {
   return undefined;
 }
 
+/** A steady, made-up upvote count for a comment, so the local kite contest has an order. */
+function madeUpVotes(commentId: string): number {
+  let h = 7;
+  for (const ch of commentId) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return 1 + (h % 24);
+}
+
 function localServer(): Plugin {
   return {
     name: 'tebar-local-server',
     configureServer(server) {
       let posts = 0;
+      let comments = 0;
       const app = createApp({
         store: createMemoryStore(),
         now: (req) =>
@@ -47,6 +55,15 @@ function localServer(): Plugin {
         },
         subredditName: () => 'AduLayangan',
         createPost: async (day) => ({ id: `t3_local${day}_${++posts}` }),
+        postId: () => 't3_localpost',
+        // Stands in for Reddit's comments: written to the terminal, posted nowhere.
+        comment: async ({ text, as }) => {
+          console.info(`[local] comment as ${as}: ${text}`);
+          return { id: `t1_local${++comments}` };
+        },
+        // Stands in for the upvotes on those comments.
+        commentScores: async (ids) =>
+          Object.fromEntries(ids.map((id) => [id, madeUpVotes(id)])),
         // Stands in for Reddit's user flair, so the flair offer can be tried here.
         setFlair: async ({ username, text }) => {
           console.info(`[local] flair for u/${username}: ${text}`);
