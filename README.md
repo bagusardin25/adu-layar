@@ -5,11 +5,11 @@
 Fly a fighter kite with one finger. Cross a rival's string and saw through it with yours. One sky a day, the same for everyone, and yesterday's best flyer comes back as the boss.
 
 <p align="center">
-  <img src="docs/screenshots/01-feed.jpg" width="250" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, a rival's kite bursts into paper scraps under the words PUTUS! +100, Raja Langit flies a pink star kite the kampung voted for, and below it the day, Raja Langit joko_benang, 6 flyers today, Kampung Hilir leads today, and a Play button">
+  <img src="docs/screenshots/01-feed.jpg" width="250" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, with Pak RT, Mbak Sri, Si Kribo, ani_gelasan and Raja Langit joko_benang flying the pink star kite the kampung voted for, and below it Day 9, Raja Langit joko_benang, 5 flyers today, Kampung Hilir leads today, and a red Play button">
   &nbsp;
   <img src="docs/screenshots/04-flight.jpg" width="250" alt="A flight in progress: Time and String bars at the top with 400 points, kites over a volcano at sunset, and Raja Langit's kite torn apart above the roofs with the words RAJA! +300">
   &nbsp;
-  <img src="docs/screenshots/07-result.jpg" width="250" alt="The result card: Layangan putus bro!, cut by Si Kribo, 400 points, rank 5 with 2 of 3 scored flights left, +400 for Kampung Hilir in the lead today, +40 coins, Fly again and Share buttons, and the flight details and today's standings folded below">
+  <img src="docs/screenshots/07-result.jpg" width="250" alt="The result card on a sheet of kite paper: Nyangkut mas bro!, your kite caught on the roofs, 500 points, rank 6 today with 2 of 3 scored flights left, +500 for Kampung Hilir in the lead today, +50 coins, a red Fly again button beside Share, and the flight details and today's standings folded below">
 </p>
 <p align="center"><sub>The post in the feed · Cutting down Raja Langit · The result card</sub></p>
 
@@ -64,11 +64,11 @@ Your string is glass-coated (_benang gelasan_): it takes about twice as much rub
 ## Played together
 
 <p align="center">
-  <img src="docs/screenshots/03-ready.jpg" width="250" alt="The ready screen: the player Neng Cilok flying for Kampung Hilir with 140 coins and 2 of 3 scored flights left, the kampung board with Hilir 1600, Pesisir 1300 and Hulu 1100, Raja Langit joko_benang worth 300 flying u/wulan_kite's kite, voted in, five more kites folded into one line, and the time of day set to dusk">
+  <img src="docs/screenshots/03-ready.jpg" width="250" alt="The ready screen: one sheet of kite paper holding Neng Cilok flying for Hilir with 100 coins and 3 of 3 scored flights left, the kampung board with Hilir 3420 ahead of Pesisir 3390 and Hulu 2290, and Raja Langit joko_benang with 1200, worth 300, flying u/wulan_kite's kite, voted in, with five more kites folded into one line and the time of day set to dusk">
   &nbsp;
   <img src="docs/screenshots/08-contest.jpg" width="250" alt="The Raja's kite sheet: flying today is u/wulan_kite's pink star kite with 14 upvotes yesterday, an Enter my kite button that posts the kite as a comment from u/sekar_layang, and today's five kites ranked by upvotes from u/putu_pesisir with 18 to u/rara_senja with 16, each opening its comment to upvote">
   &nbsp;
-  <img src="docs/screenshots/05-kampung.jpg" width="250" alt="The kampung sheet: Kampung Hulu up the river, Kampung Hilir down the river (chosen) and Kampung Pesisir by the sea with today's points, and a preview of the flair u/sekar_layang Kampung Hilir with a Wear as my flair button">
+  <img src="docs/screenshots/05-kampung.jpg" width="250" alt="The kampung sheet: Kampung Hulu up the river with 2290, Kampung Hilir down the river with 3420, chosen and outlined in blue, and Kampung Pesisir by the sea with 3390, and a preview of the flair u/sekar_layang Kampung Hilir with a Wear as my flair button">
 </p>
 
 - **Three kampungs.** Pick **Hulu** (up the river), **Hilir** (down the river) or **Pesisir** (by the sea). Every scored flight adds its points to your kampung for the day, the kampung with the most points wins it, and the next day's post says who won. You can move to another kampung at any time; points already earned stay where they were earned.
@@ -103,7 +103,7 @@ Before a round you can also pick the time of day the sky is drawn in: morning, n
 
 ## Built for phones
 
-The game is drawn for a phone held upright and played with one thumb; a mouse or the Space bar work too. Strings, kites and the kampung are drawn by hand on a canvas, with a sound for the wind, the rubbing strings and the snap. The feed card plays at 30 frames a second and stops drawing while it is scrolled out of view, so it does not drain a phone in the feed. Motion is reduced for players who ask their phone for less.
+The game is drawn for a phone held upright and played with one thumb; a mouse or the Space bar work too. Every panel is a sheet of cream kite paper on a bamboo spar, written in dark ink, so it reads in bright daylight and looks like nothing else in the feed. Strings, kites and the kampung are drawn by hand on a canvas, with a sound for the wind, the rubbing strings and the snap. The feed card plays at 30 frames a second and stops drawing while it is scrolled out of view, so it does not drain a phone in the feed. Motion is reduced for players who ask their phone for less.
 
 ## For moderators
 
