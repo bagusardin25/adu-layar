@@ -331,35 +331,42 @@ function Ready({
         <p className="ready__day">
           Day {day} · {dayLabel(day)} · {windLabel(sky.windX)}
         </p>
-        <div className="me">
-          <KiteThumb look={lookOf(profile.design)} size={34} mine />
-          <p className="me__who">
-            <span>{mine ? `You · ${mine.short}` : 'You'}</span>
-            <strong>{nameOf(profile.name)}</strong>
-          </p>
-          <button type="button" className="btn me__edit" onClick={onCustomize}>
-            Customize
-          </button>
+        {/* One sheet of kite paper: you, your kampung, and who is in today's sky. */}
+        <div className="paper ready__card">
+          <div className="me">
+            <KiteThumb look={lookOf(profile.design)} size={34} mine />
+            <p className="me__who">
+              <span>{mine ? `Flying for ${mine.short}` : 'Your kite'}</span>
+              <strong>{nameOf(profile.name)}</strong>
+            </p>
+            <button
+              type="button"
+              className="btn me__edit"
+              onClick={onCustomize}
+            >
+              Customize
+            </button>
+          </div>
+          {wallet && (
+            <p className="purse">
+              {wallet.guest ? (
+                'Log in to Reddit to earn coins.'
+              ) : (
+                <>
+                  <span className="coins">
+                    <Coin size={15} />
+                    {wallet.coins}
+                  </span>
+                  {wallet.spoolsLeft > 0
+                    ? `${wallet.spoolsLeft} of 3 scored flights left. Your best is kept.`
+                    : 'Scored flights used up. Practice on — it won’t change today’s rank.'}
+                </>
+              )}
+            </p>
+          )}
+          <Kampungs view={kampung} fliers={fliers} onPick={onPickKampung} />
+          <Rivals sky={sky} king={king} onContest={onContest} />
         </div>
-        {wallet && (
-          <p className="purse">
-            {wallet.guest ? (
-              'Log in to Reddit to earn coins.'
-            ) : (
-              <>
-                <span className="coins">
-                  <Coin size={15} />
-                  {wallet.coins}
-                </span>
-                {wallet.spoolsLeft > 0
-                  ? `${wallet.spoolsLeft} of 3 scored flights left. Your best is kept.`
-                  : 'Scored flights used up. Practice on — it won’t change today’s rank.'}
-              </>
-            )}
-          </p>
-        )}
-        <Kampungs view={kampung} fliers={fliers} onPick={onPickKampung} />
-        <Rivals sky={sky} king={king} onContest={onContest} />
         <div className="sky-pick" role="group" aria-label="Time of day">
           {MOODS.map((m) => (
             <button
@@ -466,10 +473,10 @@ function Rivals({
         <button type="button" className="rival rival--king" onClick={onContest}>
           <KiteThumb look={ghostLook(raja)} size={26} />
           <span>
-            <strong>Raja Langit · {raja.name}</strong>{' '}
-            <span>
-              {king?.seed ? 'Kampung champion' : 'Yesterday’s best'} ·{' '}
-              {raja.score} · worth 300
+            <strong className="rival__name">Raja Langit {raja.name}</strong>
+            <span className="rival__about">
+              {king?.seed ? 'Kampung champion' : 'Yesterday’s best'},{' '}
+              {raja.score}. Cut for 300.
             </span>
             <span className="rival__contest">
               {raja.chosen
@@ -512,12 +519,12 @@ const TITLES: Record<NonNullable<Match['reason']>, [string, string]> = {
   cleared: ['Langit bersih GG!', 'You cleared the sky.'],
 };
 
-/** Who cut the player's string, if anyone did. */
-function killerOf(match: Match): string | null {
+/** The kite that cut the player's string, if one did. */
+function killerOf(match: Match): Match['kites'][number] | null {
   const cut = match.events.find(
     (e) => e.type === 'cut' && e.victim === PLAYER_ID
   );
-  return cut && cut.type === 'cut' ? (match.kites[cut.by]?.name ?? null) : null;
+  return cut && cut.type === 'cut' ? (match.kites[cut.by] ?? null) : null;
 }
 
 /**
@@ -538,7 +545,7 @@ function Down({
   onResult: () => void;
 }) {
   const [title, sub] = TITLES[match.reason ?? 'cut'];
-  const killer = killerOf(match);
+  const killer = killerOf(match)?.name ?? null;
 
   if (watching) {
     return (
@@ -650,7 +657,8 @@ function KampungLine({
       style={{ '--kampung': place.colour } as CSSProperties}
     >
       <span className="kampung-dot" aria-hidden="true" />
-      {news ? `${gain} · ${news}` : gain}
+      <strong>{gain}</strong>
+      {news && <span className="result__news">{news}</span>}
     </p>
   );
 }
@@ -772,7 +780,23 @@ function Result({
     (e) => e.type === 'cut' && e.by === PLAYER_ID
   );
   const end = match.events.find((e) => e.type === 'end');
-  const killerName = killerOf(match);
+  const killer = killerOf(match);
+  const place = answer?.rank
+    ? `Rank ${answer.rank} today`
+    : answer?.counted === false
+      ? 'Practice flight'
+      : 'Scored flight';
+  /** The rest of where the player stands, as one plain sentence. */
+  const standing = [
+    answer && answer.streak > 1 ? `${answer.streak}-day streak` : null,
+    answer?.wallet
+      ? answer.wallet.spoolsLeft > 0
+        ? `${answer.wallet.spoolsLeft} of 3 scored flights left`
+        : 'no scored flights left today'
+      : null,
+  ]
+    .filter((s): s is string => s !== null)
+    .join(', ');
   const seconds = Math.round(match.tick / TICKS_PER_SECOND);
   const secondsLeft = Math.floor((ROUND_TICKS - match.tick) / TICKS_PER_SECOND);
   const still = useReducedMotion();
@@ -814,28 +838,30 @@ function Result({
       {reason === 'cleared' && !still && <Confetti />}
       <section className="result" data-reason={reason}>
         <h1 className="result__title">{title}</h1>
-        <p className="result__sub">
-          {killerName ? `Cut by ${killerName}.` : sub}
-        </p>
+        {killer ? (
+          <p className="result__sub result__by">
+            <KiteThumb look={skyLook(killer, match.sky)} size={30} />
+            <span>
+              Cut by <strong>{killer.name}</strong>
+            </span>
+          </p>
+        ) : (
+          <p className="result__sub">{sub}</p>
+        )}
         <p className="result__score" aria-label={String(match.score)}>
           {score}
         </p>
         <p className="result__place">
-          {answer?.rank
-            ? `Rank ${answer.rank}`
-            : answer?.counted === false
-              ? 'Practice flight'
-              : 'Scored flight'}
-          {answer && answer.streak > 1 ? ` · ${answer.streak}-day streak` : ''}
-          {answer?.wallet
-            ? answer.wallet.spoolsLeft > 0
-              ? ` · ${answer.wallet.spoolsLeft} of 3 scored flights left`
-              : ' · no scored flights left today'
-            : ''}
+          <strong>{place}</strong>
+          {standing && (
+            <span>{standing.charAt(0).toUpperCase() + standing.slice(1)}</span>
+          )}
         </p>
 
-        <KampungLine answer={answer} guest={guest} />
-        <Earned answer={answer} guest={guest} />
+        <div className="result__gains">
+          <KampungLine answer={answer} guest={guest} />
+          <Earned answer={answer} guest={guest} />
+        </div>
 
         <div className="result__actions">
           <button type="button" className="btn btn--primary" onClick={onAgain}>

@@ -268,11 +268,11 @@
 
 .rivals {
   list-style: none;
-  margin: var(--s-2) 0 0;
+  margin: 0;
   padding: 0;
   display: grid;
-  gap: 6px;
-  width: min(100%, 20rem);
+  gap: 2px;
+  width: 100%;
   pointer-events: auto;
 }
 
@@ -281,9 +281,8 @@
   grid-template-columns: auto 1fr;
   align-items: center;
   gap: var(--s-3);
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: var(--radius);
-  background: rgb(20 26 51 / 0.86);
   font-size: var(--step--1);
   text-align: left;
 }
@@ -296,16 +295,17 @@
   color: var(--ink-2);
 }
 
-/* The time of day the sky is drawn in: the player's choice, like a theme. */
+/* The time of day the sky is drawn in: the player's choice, like a theme. The chosen one is a
+   slip of kite paper on a dusk plate. */
 /* Only the buttons take presses; the space around them is still the sky. */
 .sky-pick {
   pointer-events: none;
   display: flex;
   gap: 2px;
-  margin-top: var(--s-2);
+  margin-top: var(--s-1);
   padding: 3px;
-  border-radius: 999px;
-  background: rgb(20 26 51 / 0.86);
+  border-radius: var(--radius);
+  background: rgb(20 26 51 / 0.78);
 }
 
 .sky-pick__btn {
@@ -313,7 +313,7 @@
   min-height: 40px;
   padding: 0 12px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   background: transparent;
   color: var(--ink-2);
   font-family: var(--font-text);
@@ -327,8 +327,9 @@
 }
 
 .sky-pick__btn[aria-pressed='true'] {
-  background: var(--brass);
-  color: var(--on-brass);
+  background: var(--paper);
+  color: var(--paper-ink);
+  box-shadow: inset 0 -3px 0 var(--kite-red);
 }
 
 .kite-thumb {
@@ -342,12 +343,7 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--s-3);
-  width: min(100%, 20rem);
-  margin-top: var(--s-2);
-  padding: 4px 4px 4px 12px;
-  border: 1px solid var(--brass-dim);
-  border-radius: var(--radius);
-  background: rgb(20 26 51 / 0.86);
+  width: 100%;
   font-size: var(--step--1);
   text-align: left;
 }
@@ -358,17 +354,16 @@
 }
 
 .me__who span {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 600;
   color: var(--ink-3);
 }
 
 .me__who strong {
-  font-size: var(--step-0);
-  font-weight: 700;
-  color: var(--brass-strong);
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 800;
+  color: var(--ink);
 }
 
 .me__edit {
@@ -383,15 +378,16 @@
   color: var(--ink-2);
 }
 
+/* Written straight on the dark foot of the sky: no panel, so the paper above stays the only
+   sheet on screen. */
 .how {
   display: grid;
   gap: var(--s-2);
   justify-items: center;
   width: min(100%, 22rem);
-  padding: var(--s-4);
-  border-radius: var(--radius-lg);
-  background: rgb(20 26 51 / 0.82);
+  padding: var(--s-2) var(--s-4);
   text-align: center;
+  text-shadow: 0 1px 3px rgb(10 12 30 / 0.9);
 }
 
 .how__keys {
@@ -438,7 +434,7 @@
   bottom: calc(var(--s-5) + env(safe-area-inset-bottom));
   transform: translateX(-50%);
   padding: 6px 14px;
-  border-radius: 99px;
+  border-radius: var(--radius);
   background: rgb(20 26 51 / 0.7);
   font-size: var(--step--1);
   font-weight: 600;
@@ -674,16 +670,14 @@
 
 .seg {
   display: flex;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--stage-2);
+  gap: 4px;
 }
 
 .seg__btn {
   min-height: 34px;
-  padding: 0 14px;
-  border: 0;
-  border-radius: 999px;
+  padding: 0 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius);
   background: transparent;
   color: var(--ink-2);
   font-family: var(--font-text);
@@ -693,6 +687,7 @@
 }
 
 .seg__btn[aria-pressed='true'] {
+  border-color: var(--brass);
   background: var(--brass);
   color: var(--on-brass);
 }
@@ -737,7 +732,7 @@
   align-items: center;
   gap: 5px;
   padding: 3px 10px 3px 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   background: rgb(242 194 48 / 0.16);
   color: var(--brass-strong);
   font-family: var(--font-display);
@@ -760,30 +755,36 @@
   margin-left: auto;
 }
 
+/* Tabs sit on one ruled line; the open tab is underlined with a length of red string. */
 .tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--stage-2);
+  border-bottom: 1px solid var(--line);
 }
 
 .tabs__tab {
-  min-height: 36px;
+  min-height: 40px;
+  margin-bottom: -1px;
   padding: 0 8px;
   border: 0;
-  border-radius: 999px;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: var(--ink-2);
+  color: var(--ink-3);
   font-family: var(--font-text);
   font-weight: 600;
   font-size: var(--step--1);
   cursor: pointer;
 }
 
-.tabs__tab[aria-selected='true'] {
-  background: var(--stage-4);
+.tabs__tab:hover {
   color: var(--ink);
+}
+
+.tabs__tab[aria-selected='true'] {
+  border-bottom-color: var(--brass);
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .workshop__panel {
@@ -806,9 +807,10 @@
   align-items: center;
   gap: 2px;
   padding: 1px 5px 1px 3px;
-  border-radius: 999px;
-  background: rgb(10 12 30 / 0.85);
-  color: var(--brass-strong);
+  border-radius: 3px;
+  /* A dark price tag, the same on paper or sky: 10.8:1. */
+  background: #2b1a12;
+  color: #ffc670;
   font-size: 0.625rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -945,10 +947,45 @@
   text-align: center;
 }
 
+/* Rank on its own line, the rest of the day underneath in plain words. */
 .result__place {
+  display: grid;
+  gap: 2px;
+  margin-top: calc(-1 * var(--s-2));
   font-size: var(--step--1);
-  font-weight: 700;
-  color: var(--brass-strong);
+  color: var(--ink-2);
+}
+
+.result__place strong {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 800;
+  color: var(--brass);
+}
+
+/* What the flight brought in, below a fold in the paper. */
+.result__gains {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: center;
+  width: 100%;
+  padding-top: var(--s-3);
+  border-top: 1px dashed var(--line);
+}
+
+.result__gains:empty {
+  display: none;
+}
+
+/* The kite that cut you, drawn beside its name. */
+.result__by {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.result__by strong {
+  color: var(--ink);
 }
 
 .standings {
@@ -1018,8 +1055,9 @@
 .result__score {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 3rem;
+  font-size: 3.5rem;
   line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1125,16 +1163,21 @@
   gap: 6px;
 }
 
-/* The way to the moderators: always there, never in the way of a launch. */
+/* The way to the moderators: always there, never in the way of a launch. Plain text: on the
+   sky it carries a shadow to stay readable, on paper it is ink. */
 .report {
   pointer-events: auto;
   min-height: 36px;
   padding: 0 var(--s-3);
-  background: rgb(20 26 51 / 0.8);
+  background: transparent;
   font-size: 0.8125rem;
   color: var(--ink-2);
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.ready__head > .report {
+  text-shadow: 0 1px 3px rgb(10 12 30 / 0.95);
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1181,7 +1224,7 @@
 }
 
 .result[data-reason='cleared'] > .result__title {
-  color: var(--brass-strong);
+  color: var(--brass);
 }
 
 @keyframes score-in {
@@ -1300,7 +1343,7 @@
   height: 10px;
   border-radius: 50%;
   background: var(--kampung, var(--ink-3));
-  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.18);
+  box-shadow: 0 0 0 1.5px rgb(43 26 18 / 0.35);
 }
 
 /* On the ready screen: who leads, the three kampungs, and the way to join one. */
@@ -1308,10 +1351,7 @@
   display: grid;
   justify-items: center;
   gap: 6px;
-  width: min(100%, 20rem);
-  padding: 8px 10px;
-  border-radius: var(--radius);
-  background: rgb(20 26 51 / 0.86);
+  width: 100%;
 }
 
 .kampungs__head {
@@ -1391,9 +1431,13 @@
   color: var(--brass-strong);
 }
 
-/* Raja Langit up front, everyone else folded into one line. */
+/* Raja Langit up front, everyone else folded into one line. The king's row is a strip of
+   darker paper with a red edge, like a kite's border tape. */
 .rival--king {
-  border: 1px solid var(--brass-dim);
+  border: 0;
+  border-left: 4px solid var(--brass);
+  border-radius: 2px var(--radius) var(--radius) 2px;
+  background: var(--stage-2);
 }
 
 .rival--king strong {
@@ -1410,7 +1454,7 @@ button.rival {
 }
 
 button.rival:hover {
-  border-color: var(--brass);
+  background: var(--stage-3);
 }
 
 .rival .rival__contest {
@@ -1423,7 +1467,6 @@ button.rival:hover {
 
 .rivals__more {
   border-radius: var(--radius);
-  background: rgb(20 26 51 / 0.86);
   font-size: var(--step--1);
 }
 
@@ -1615,18 +1658,27 @@ button.rival:hover {
   font-size: var(--step-0);
 }
 
-/* On the result card: where the flight's points went. */
+/* On the result card: where the flight's points went, and how the day stands. */
 .result__kampung {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-items: center;
+  column-gap: 6px;
   font-size: var(--step--1);
-  font-weight: 600;
   color: var(--ink-2);
   text-wrap: balance;
 }
 
-.result__kampung .kampung-dot {
-  display: inline-block;
-  margin-right: 6px;
-  vertical-align: -1px;
+.result__kampung strong {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.result__news {
+  grid-column: 1 / -1;
+  font-size: 0.8125rem;
+  color: var(--ink-3);
 }
 
 /* ───────────────────────────── The kite contest ───────────────────────────── */
@@ -1754,4 +1806,153 @@ button.rival:hover {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--brass-strong);
+}
+
+/* ───────────────────────────── Kite paper ───────────────────────────── */
+
+/* Every panel is a sheet of kite paper glued to a bamboo spar: the stuff the kites in the sky
+   are made of. Inside a sheet the ink is dark, so the shared tokens are remapped here and every
+   component inside follows without its own rules. Last in the file, so it outranks each
+   panel's own frame. */
+.paper,
+.result,
+.sheet,
+.workshop,
+.down,
+.coach,
+.watching {
+  color-scheme: light;
+  --ink: var(--paper-ink);
+  --ink-2: var(--paper-ink-2);
+  --ink-3: var(--paper-ink-3);
+  --stage: var(--paper);
+  --stage-2: var(--paper-2);
+  --stage-3: var(--paper-3);
+  --stage-4: var(--paper-4);
+  --line: var(--paper-edge);
+  --line-strong: var(--paper-line);
+  --brass: var(--kite-red);
+  --brass-strong: var(--paper-accent);
+  --brass-dim: var(--bamboo-dark);
+  --on-brass: var(--on-red);
+  --ok: #2f6b2a;
+  --danger: #a3241a;
+  --btn-edge: var(--kite-red-dark);
+  --focus: 0 0 0 2px var(--paper), 0 0 0 4px var(--paper-ink);
+  color: var(--paper-ink);
+  border: 1px solid var(--paper-edge);
+  border-radius: var(--radius-lg);
+  background:
+    /* The spar's nodes, then the spar itself, along the top edge. */
+    repeating-linear-gradient(
+        to right,
+        transparent 0 58px,
+        var(--bamboo-dark) 58px 60px
+      )
+      top / 100% 6px no-repeat,
+    linear-gradient(
+        to bottom,
+        var(--bamboo-light) 0 2px,
+        var(--bamboo) 2px 4px,
+        var(--bamboo-dark) 4px 6px
+      )
+      top / 100% 6px no-repeat,
+    /* Paper fibres. */
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.25 0 0 0 0 0.12 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    linear-gradient(to bottom, #f8f0dd, #f1e4c8);
+  box-shadow:
+    0 12px 32px rgb(8 6 28 / 0.45),
+    0 2px 6px rgb(8 6 28 / 0.3);
+}
+
+/* Room under the spar. */
+.result {
+  padding-top: calc(6px + var(--s-5));
+}
+
+.sheet,
+.workshop {
+  padding-top: calc(6px + var(--s-3));
+}
+
+.down,
+.coach {
+  padding-top: calc(6px + var(--s-3));
+}
+
+.watching {
+  padding-top: calc(6px + 4px);
+}
+
+/* The ready screen's one sheet: you, the kampungs, and who flies today, divided by folds. */
+.ready__card {
+  display: grid;
+  gap: var(--s-2);
+  width: min(100%, 21rem);
+  margin-top: var(--s-2);
+  padding: calc(6px + var(--s-3)) var(--s-3) var(--s-3);
+  text-align: left;
+}
+
+/* The coins beside the day's flights, on one row. */
+.ready__card .purse {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  justify-content: start;
+  gap: var(--s-2);
+  line-height: 1.3;
+  text-align: left;
+}
+
+.ready__card .purse .coins {
+  align-self: start;
+}
+
+.ready__card > .kampungs,
+.ready__card > .rivals {
+  padding-top: var(--s-2);
+  border-top: 1px dashed var(--line);
+}
+
+.rival__name,
+.rival .rival__about {
+  display: block;
+}
+
+.rival .rival__about {
+  font-size: 0.8125rem;
+}
+
+/* A short phone: the ready screen still has to fit without scrolling. */
+@media (max-height: 720px) {
+  .overlay--ready {
+    padding-top: calc(var(--s-4) + env(safe-area-inset-top));
+    padding-bottom: calc(var(--s-4) + env(safe-area-inset-bottom));
+  }
+
+  .ready__head {
+    gap: 6px;
+  }
+
+  .ready__card {
+    gap: 6px;
+    padding-bottom: var(--s-2);
+  }
+
+  .ready__card > .kampungs,
+  .ready__card > .rivals {
+    padding-top: 6px;
+  }
+
+  .sky-pick__btn {
+    min-height: 36px;
+  }
+
+  .ready__head > .report {
+    min-height: 30px;
+  }
+
+  .how {
+    padding: 0 var(--s-4);
+  }
 }

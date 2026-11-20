@@ -75,7 +75,7 @@ export function ContestSheet({
           <button
             ref={done}
             type="button"
-            className="btn btn--primary sheet__done"
+            className="btn sheet__done"
             onClick={onDone}
           >
             Done
