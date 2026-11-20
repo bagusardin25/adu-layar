@@ -1,11 +1,12 @@
 /* Adu Layangan — design tokens.
-   A kampung sky at golden hour. Panels are deep dusk blue so text stays readable over the sky;
-   warm orange is the one accent. */
+   A kampung sky at golden hour. Text on the sky is cream on dusk blue. Panels are sheets of
+   kite paper on a bamboo spar, written in dark ink (see .paper in game.css). Kite red is the
+   action colour; sunset orange is the accent. */
 
 :root {
   color-scheme: dark;
 
-  /* Dusk panels */
+  /* Dusk: the sky's own plates and text */
   --stage: #141a33;
   --stage-2: #1b2244;
   --stage-3: #252d55;
@@ -27,6 +28,27 @@
   /* Kites */
   --merah: #d7263d;
   --putih: #ffffff;
+
+  /* Kite paper and bamboo: what every panel is made of. */
+  --paper: #f5ebd5;
+  --paper-2: #eadcbe;
+  --paper-3: #dfcda8;
+  --paper-4: #d4bf95;
+  --paper-edge: #cdb68c;
+  --paper-line: #8c7350; /* control borders, 3.8:1 on paper, 3.3:1 on paper-2 */
+  --paper-ink: #2b1a12; /* 14:1 on paper */
+  --paper-ink-2: #5a4434; /* 7.7:1 on paper */
+  --paper-ink-3: #6e5744; /* 5.7:1 on paper, 5:1 on paper-2 */
+  --paper-accent: #9c4100; /* 5.6:1 on paper */
+  --bamboo: #c99a55;
+  --bamboo-light: #e0bb78;
+  --bamboo-dark: #8a6431;
+
+  /* The action colour: the red of the kite mark. Cream on it is 5.5:1; it is 5:1 on paper. */
+  --kite-red: #c21f37;
+  --kite-red-hover: #d02a42;
+  --kite-red-dark: #7e1022;
+  --on-red: #fff6e8;
 
   --danger: #ff8a7a;
   --ok: #9fdc9a;
@@ -53,9 +75,9 @@
   --s-5: 1.5rem;
   --s-6: 2rem;
 
-  /* Shape */
-  --radius: 10px;
-  --radius-lg: 16px;
+  /* Shape: paper is cut, not moulded, so corners stay small. */
+  --radius: 6px;
+  --radius-lg: 4px;
   --focus: 0 0 0 3px var(--stage), 0 0 0 5px var(--brass-strong);
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 }
