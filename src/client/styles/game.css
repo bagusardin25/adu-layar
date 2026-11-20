@@ -1393,7 +1393,10 @@
 
 .kampung-bar__item[data-mine] {
   border-color: var(--kampung);
-  background: color-mix(in srgb, var(--kampung) 28%, var(--stage-2));
+  /* A brighter sheet with a double-weight edge in the kampung's colour. Mixing the colour into
+     the paper would turn it grey. */
+  box-shadow: inset 0 0 0 1px var(--kampung);
+  background: var(--stage);
 }
 
 .kampung-bar__name {
@@ -1587,7 +1590,8 @@ button.rival:hover {
 
 .kampung-pick[aria-pressed='true'] {
   border-color: var(--kampung);
-  background: color-mix(in srgb, var(--kampung) 30%, var(--stage-2));
+  box-shadow: inset 0 0 0 1px var(--kampung);
+  background: var(--stage);
 }
 
 .kampung-pick .kampung-dot {
