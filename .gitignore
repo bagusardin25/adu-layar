@@ -2,3 +2,16 @@ node_modules
 .DS_Store
 dist
 .env
+
+# Kept on this computer only, not on GitHub.
+# Planning notes, progress and the old Tebar concept:
+/PRD.md
+/PROGRESS.md
+/SUBREDDIT.md
+/archive/
+# Submission drafts, video assets and subreddit artwork. docs/screenshots stays: the README shows it.
+/docs/*
+!/docs/screenshots/
+# Phone recordings, rendered videos, and the tools that make them (with their downloads and cache).
+/record demo vidio from hp/
+/tools/video/

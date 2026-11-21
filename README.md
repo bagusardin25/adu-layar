@@ -5,11 +5,16 @@
 Fly a fighter kite with one finger. Cross a rival's string and saw through it with yours. One sky a day, the same for everyone, and yesterday's best flyer comes back as the boss.
 
 <p align="center">
-  <img src="docs/screenshots/01-feed.jpg" width="250" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, with Pak RT, Mbak Sri, Si Kribo, ani_gelasan and Raja Langit joko_benang flying the pink star kite the kampung voted for, and below it Day 9, Raja Langit joko_benang, 5 flyers today, Kampung Hilir leads today, and a red Play button">
+  <a href="https://youtu.be/qcgpzQv69aQ"><img src="https://i.ytimg.com/vi/qcgpzQv69aQ/maxresdefault.jpg" width="640" alt="Watch the 58-second demo of Adu Layangan on YouTube"></a>
+</p>
+<p align="center"><b><a href="https://youtu.be/qcgpzQv69aQ">▶ Watch the 58-second demo on YouTube</a></b></p>
+
+<p align="center">
+  <img src="docs/screenshots/01-feed.jpg" height="500" alt="The post in the feed: the day's sky plays by itself over the kampung roofs at dusk, with Pak RT, Mbak Sri, Si Kribo, ani_gelasan and Raja Langit joko_benang flying the pink star kite the kampung voted for, and below it Day 9, Raja Langit joko_benang, 5 flyers today, Kampung Hilir leads today, and a red Play button">
   &nbsp;
-  <img src="docs/screenshots/04-flight.jpg" width="250" alt="A flight in progress: Time and String bars at the top with 400 points, kites over a volcano at sunset, and Raja Langit's kite torn apart above the roofs with the words RAJA! +300">
+  <img src="docs/screenshots/04-flight.jpg" height="500" alt="A flight in progress: Time and String bars at the top with 400 points, kites over a volcano at sunset, and Raja Langit's kite torn apart above the roofs with the words RAJA! +300">
   &nbsp;
-  <img src="docs/screenshots/07-result.jpg" width="250" alt="The result card on a sheet of kite paper: Nyangkut mas bro!, your kite caught on the roofs, 500 points, rank 6 today with 2 of 3 scored flights left, +500 for Kampung Hilir in the lead today, +50 coins, a red Fly again button beside Share, and the flight details and today's standings folded below">
+  <img src="docs/screenshots/07-result.jpg" height="500" alt="The result card on a sheet of kite paper: Nyangkut mas bro!, your kite caught on the roofs, 500 points, rank 6 today with 2 of 3 scored flights left, +500 for Kampung Hilir in the lead today, +50 coins, a red Fly again button beside Share, and the flight details and today's standings folded below">
 </p>
 <p align="center"><sub>The post in the feed · Cutting down Raja Langit · The result card</sub></p>
 
@@ -122,7 +127,7 @@ Requires Node 22.12 or newer.
 
 ```bash
 npm install
-npm test              # 80 tests: flight, cutting, replay, scoring, coins, kampungs, sharing, the kite contest
+npm test              # 85 tests: flight, cutting, replay, scoring, coins, kampungs, sharing, the kite contest, older posts
 npm run dev:local     # the whole game in a browser at http://localhost:5180/game.html, without Reddit
 npm run dev           # playtest on Reddit (needs `npm run login` first)
 npm run build         # the bundle Reddit runs
