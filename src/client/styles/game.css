@@ -1960,3 +1960,25 @@ button.rival:hover {
     padding: 0 var(--s-4);
   }
 }
+
+/* Open in an older day's post: one tap to today's. On the sky, not on paper. */
+.old-post {
+  pointer-events: auto;
+  max-width: min(100%, 22rem);
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 1px solid var(--brass-dim);
+  border-radius: 999px;
+  background: rgb(20 26 51 / 0.86);
+  color: var(--brass-strong);
+  font-family: var(--font-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-wrap: balance;
+  cursor: pointer;
+}
+
+.old-post:hover {
+  border-color: var(--brass);
+}

@@ -319,7 +319,8 @@ test('confirm posts the card as the player under the day’s anchor', async () =
   assert.equal(res.status, 200);
   assert.equal(data.posted, true);
   assert.equal(comments[0]?.as, 'APP');
-  assert.equal(comments[0]?.id, 't3_today');
+  // The thread is in the day's own post (made here, since nothing posted it yet).
+  assert.equal(comments[0]?.id, 't3_post5');
   assert.equal(comments[1]?.as, 'USER');
   assert.equal(comments[1]?.id, 't1_1');
   assert.equal(comments[1]?.text, data.text);

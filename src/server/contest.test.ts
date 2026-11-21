@@ -134,7 +134,7 @@ test('one kite per player per day', async () => {
   assert.equal(comments.length, 2);
 });
 
-test('entering needs a login, and today’s post on Reddit', async () => {
+test('entering needs a login and Reddit, and works from any day’s post', async () => {
   const { send, who, clock } = setup();
   who.current = null;
   assert.equal((await send('/api/contest/enter', {})).status, 401);
@@ -142,9 +142,11 @@ test('entering needs a login, and today’s post on Reddit', async () => {
   const offReddit = setup({ comment: undefined });
   assert.equal((await offReddit.send('/api/contest/enter', {})).status, 400);
 
-  // Yesterday's post, opened today.
-  const old = setup({ postDay: () => 4 });
-  assert.equal((await old.send('/api/contest/enter', {})).status, 400);
+  // Yesterday's post, opened today: the kite still goes to today's contest, in today's post.
+  const old = setup({ postDay: () => 4, postId: () => 't3_post4' });
+  assert.equal((await old.send('/api/contest/enter', {})).status, 200);
+  assert.equal(old.comments[0].parent, 't3_post5');
+  assert.equal(old.comments[1].parent, old.comments[0].id);
   assert.equal(clock.day, 5);
 });
 

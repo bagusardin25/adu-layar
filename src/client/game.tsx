@@ -2,6 +2,7 @@ import './styles/theme.css';
 import './styles/base.css';
 import './styles/game.css';
 
+import { navigateTo } from '@devvit/web/client';
 import { useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { dayLabel, dayNumber } from '../shared/days.ts';
@@ -227,6 +228,17 @@ export function Game() {
             kampung={kampung.view}
             onPickKampung={() => setPicking(true)}
             onContest={() => setContesting(true)}
+            oldPost={
+              fight?.todayPost &&
+              fight.viewing !== null &&
+              fight.viewing < fight.day
+                ? {
+                    day: fight.viewing,
+                    today: fight.day,
+                    link: fight.todayPost,
+                  }
+                : null
+            }
           />
         )}
       {taught && phase.name === 'ready' && !sky && (
@@ -308,6 +320,7 @@ function Ready({
   kampung,
   onPickKampung,
   onContest,
+  oldPost,
 }: {
   sky: Sky;
   day: number;
@@ -322,6 +335,8 @@ function Ready({
   kampung: KampungView;
   onPickKampung: () => void;
   onContest: () => void;
+  /** Open in an older day's post: that day, today, and a link to today's post. */
+  oldPost: { day: number; today: number; link: string } | null;
 }) {
   const mine = kampung.kampung ? kampungOf(kampung.kampung) : null;
   return (
@@ -331,6 +346,16 @@ function Ready({
         <p className="ready__day">
           Day {day} · {dayLabel(day)} · {windLabel(sky.windX)}
         </p>
+        {oldPost && (
+          <button
+            type="button"
+            className="old-post"
+            onClick={() => navigateTo(oldPost.link)}
+          >
+            This is Day {oldPost.day}’s post. Today’s sky is in Day{' '}
+            {oldPost.today}’s post ›
+          </button>
+        )}
         {/* One sheet of kite paper: you, your kampung, and who is in today's sky. */}
         <div className="paper ready__card">
           <div className="me">

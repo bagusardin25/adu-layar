@@ -7,7 +7,12 @@ import { Hono } from 'hono';
 import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
 import { flightCard } from '../shared/card.ts';
 import { dayNumber } from '../shared/days.ts';
-import { ensureDailyPost, KEEP_SECONDS } from './core/posts.ts';
+import {
+  ensureDailyPost,
+  KEEP_SECONDS,
+  postIdFor,
+  postLink,
+} from './core/posts.ts';
 import type { Player } from './core/posts.ts';
 import { loadProfile, saveProfile } from './core/profiles.ts';
 import {
@@ -109,6 +114,16 @@ export function createApp(deps: AppDeps): Hono {
 
   const today = (req: Request) => dayNumber(deps.now(req));
 
+  /**
+   * The post a day's comments belong in: that day's own post, whichever post the player has
+   * open. Today's is made now if the scheduler has not made it yet; null while it is on its way.
+   */
+  const postFor = async (req: Request, day: number): Promise<string | null> => {
+    const stored = await postIdFor(deps.store, day);
+    if (stored) return stored;
+    return day === today(req) ? (await postToday(req)).id : null;
+  };
+
   async function body(req: Request): Promise<Record<string, unknown>> {
     try {
       const data: unknown = await req.json();
@@ -126,10 +141,20 @@ export function createApp(deps: AppDeps): Hono {
     const day = today(c.req.raw);
     await settleYesterday(c.req.raw);
     const fight = await skyForFight(deps.store, day);
+    // Opened in an older day's post: point the player to today's.
+    const viewing = deps.postDay(c.req.raw) ?? null;
+    const todaysId =
+      viewing !== null && viewing < day
+        ? await postIdFor(deps.store, day)
+        : null;
     return c.json({
       day,
       ...fight,
       kampungs: await kampungBoard(deps.store, day),
+      viewing,
+      todayPost: todaysId
+        ? postLink(deps.subredditName(c.req.raw), todaysId)
+        : null,
     });
   });
 
@@ -208,16 +233,6 @@ export function createApp(deps: AppDeps): Hono {
     // Outside Reddit (the local preview, tests) there is nowhere to post.
     if (!comment) return c.json({ text, posted: false, canPost: false, as });
 
-    const postId = deps.postId?.(c.req.raw);
-    if (!postId)
-      return c.json({
-        text,
-        posted: false,
-        canPost: false,
-        as,
-        error: 'Open today’s post to share.',
-      });
-
     const shared = sharedKey(player.id);
     const { confirm } = await body(c.req.raw);
     if (confirm !== true) {
@@ -225,11 +240,27 @@ export function createApp(deps: AppDeps): Hono {
       return c.json({ text, posted, canPost: true, as });
     }
 
-    // Claimed before posting, so a double tap or two requests at once post one comment.
+    // Claimed before anything else, so a double tap or two requests at once post one comment.
     if ((await deps.store.hSetNX(shared, 'posted', '1')) === 0)
       return c.json({ text, posted: true, canPost: true, as });
     await deps.store.expire(shared, KEEP_SECONDS);
     try {
+      // The card goes under the thread of the day the flight was flown, in that day's post,
+      // even when the player opened an older post.
+      const postId = await postFor(c.req.raw, last.day);
+      if (!postId) {
+        await deps.store.hDel(shared, ['posted']);
+        return c.json(
+          {
+            text,
+            posted: false,
+            canPost: true,
+            as,
+            error: 'Today’s post is on its way. Try again in a moment.',
+          },
+          503
+        );
+      }
       const threadKey = `thread:${last.day}`;
       let parent = await deps.store.get(threadKey);
       if (!parent) {
@@ -325,9 +356,6 @@ export function createApp(deps: AppDeps): Hono {
     const entered = player
       ? await hasEntered(deps.store, day, player.id)
       : false;
-    const postDay = deps.postDay(req);
-    const inTodaysPost =
-      Boolean(deps.postId?.(req)) && (postDay === undefined || postDay === day);
     return {
       day,
       entries: ranked.map((e) => ({
@@ -341,7 +369,8 @@ export function createApp(deps: AppDeps): Hono {
       guest: !player,
       name: player?.name ?? null,
       entered,
-      canEnter: Boolean(player && deps.comment && inTodaysPost && !entered),
+      // From any post: the kite goes under today's contest, in today's post.
+      canEnter: Boolean(player && deps.comment && !entered),
     };
   };
 
@@ -356,13 +385,20 @@ export function createApp(deps: AppDeps): Hono {
     if (!player) return c.json({ error: 'Log in to enter your kite.' }, 401);
     const day = today(c.req.raw);
     const comment = deps.comment;
-    const postId = deps.postId?.(c.req.raw);
-    const postDay = deps.postDay(c.req.raw);
-    if (!comment || !postId || (postDay !== undefined && postDay !== day))
-      return c.json({ error: 'Open today’s post to enter your kite.' }, 400);
+    if (!comment)
+      return c.json({ error: 'Kites are entered from Reddit.' }, 400);
     if (!(await claimEntry(deps.store, day, player.id)))
       return c.json({ error: 'Your kite is already in today’s contest.' }, 409);
     try {
+      // Today's post, whichever post the player has open.
+      const postId = await postFor(c.req.raw, day);
+      if (!postId) {
+        await dropEntry(deps.store, day, player.id);
+        return c.json(
+          { error: 'Today’s post is on its way. Try again in a moment.' },
+          503
+        );
+      }
       const { profile } = await loadProfile(deps.store, player);
       let parent = await contestThread(deps.store, day);
       if (!parent) {

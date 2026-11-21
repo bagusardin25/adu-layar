@@ -10,7 +10,7 @@ import {
 } from '@devvit/web/server';
 import { skyForFight } from './core/fight.ts';
 import { kampungBoard } from './core/kampung.ts';
-import { dailyTitle } from './core/posts.ts';
+import { dailyTitle, postIdFor } from './core/posts.ts';
 import { createApp } from './app.ts';
 
 const app = createApp({
@@ -31,10 +31,21 @@ const app = createApp({
   createPost: async (day) => {
     const fight = await skyForFight(redis, day);
     const { yesterday } = await kampungBoard(redis, day);
-    return reddit.submitCustomPost({
+    const post = await reddit.submitCustomPost({
       title: dailyTitle(day, fight.king?.name ?? null, yesterday),
       postData: { day },
     });
+    // Today's post is pinned at the top of the subreddit, in place of yesterday's. A pin that
+    // fails never stops the day's post.
+    try {
+      const before = await postIdFor(redis, day - 1);
+      if (before)
+        await (await reddit.getPostById(before as `t3_${string}`)).unsticky();
+      await post.sticky(1);
+    } catch (error) {
+      console.warn('Could not pin today’s post', error);
+    }
+    return post;
   },
   comment: async ({ id, text, as, sticky }) => {
     const comment = await reddit.submitComment({

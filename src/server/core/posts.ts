@@ -38,6 +38,19 @@ export async function ensureDailyPost(
   }
 }
 
+/** The post made for a day, once it exists. */
+export async function postIdFor(
+  store: Store,
+  day: number
+): Promise<string | null> {
+  const id = await store.hGet(POSTS, String(day));
+  return id && id !== PENDING ? id : null;
+}
+
+/** A link to a post on Reddit. */
+export const postLink = (subreddit: string, postId: string): string =>
+  `https://www.reddit.com/r/${subreddit}/comments/${postId.replace(/^t3_/, '')}/`;
+
 /**
  * The day's post title, as it shows in the feed: the day, Raja Langit to cut down, and the
  * kampung that won yesterday, so the rivalry is visible before anyone opens the post.
